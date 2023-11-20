@@ -131,11 +131,12 @@ model TeamMember {
   team      Team   @relation(fields: [team_id], references: [id], onDelete: Cascade)
   team_id   String
   member    User   @relation(fields: [member_id], references: [id], onDelete: Cascade)
-  member_id String @unique // set to unique since 1 member = 1 team
+  member_id String
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  @@unique([team_id, member_id], name: "unique_team_id_member_id")
   @@map("team_members")
 }
 
