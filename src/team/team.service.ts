@@ -11,9 +11,13 @@ export class TeamService {
 
   async create(createTeamDto: CreateTeamDto) {
     try {
-      return await this.prisma.team.create({
+      const created = await this.prisma.team.create({
         data: { ...createTeamDto },
       });
+
+      const team = await this.findOne(created.id)
+      return team
+
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException('Team with the same data already exists.');
@@ -67,8 +71,9 @@ export class TeamService {
       where: { id },
       data: { ...updateTeamDto },
     });
-  
-    return updatedTeam;
+
+    const team = await this.findOne(updatedTeam.id)
+    return team
   }
   
   async remove(id: string) {
