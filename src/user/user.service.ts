@@ -210,8 +210,7 @@ export class UserService {
 		const usersWithoutPassword = users.map(user => {
 
 			return {
-				...user,
-				['password_hash']: ''
+				...user
 			}
 		});
 
@@ -245,6 +244,42 @@ export class UserService {
 		
 		delete user.password_hash
 		return user;
+	}
+
+	async findUsersWithoutTeam() {
+		const users = await this.prisma.user.findMany({
+			where: {
+				teamLeader: null, // user is not a team leader
+				teamMembers: { // user is not a team member
+					none: {}
+				}
+			},	
+			include: {
+				Bart: true, 
+				Cso: true,  
+				Po: true,  
+				Na: true,  
+				teamMembers: true, 
+				teamLeader: true,  
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					}
+				}     
+			}
+		});
+
+		const usersWithoutPassword = users.map(user => {
+
+			return {
+				...user,
+			}
+		});
+
+		console.log('usersWithoutPassword', usersWithoutPassword)
+
+		return usersWithoutPassword
 	}
 
 	async isUsernameTaken(user_name: string): Promise<boolean> {

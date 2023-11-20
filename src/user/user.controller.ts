@@ -30,8 +30,13 @@ export class UserController {
 	}
 
 	@Get()
-	async findAll(): Promise<User[]> {
+	async findAll() {
 		return await this.userService.findAll();
+	}
+
+	@Get('/no-team')
+	async findUsersWithoutTeam() {
+		return await this.userService.findUsersWithoutTeam();
 	}
 
 	@Get(':id')
