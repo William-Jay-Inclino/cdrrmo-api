@@ -30,7 +30,13 @@ export class TeamService {
   async findAll() {
     return await this.prisma.team.findMany({
       include: {
-        team_leader: true,
+        team_leader: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          }
+        },
         teamMembers: true
       }
     });
@@ -41,7 +47,10 @@ export class TeamService {
       where: { id },
       include: {
         team_leader: {
-          include: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
             skills: {
               include: {
                 TrainingSkill: true
@@ -52,7 +61,10 @@ export class TeamService {
         teamMembers: {
           include: {
             member: {
-              include: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
                 skills: {
                   include: {
                     TrainingSkill: true

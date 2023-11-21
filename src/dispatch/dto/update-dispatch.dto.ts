@@ -1,6 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateDispatchDto } from './create-dispatch.dto';
-import { IsUUID, IsString, IsNotEmpty, IsNumber, IsDate } from 'class-validator';
+import { IsUUID, IsString, IsNotEmpty, IsNumber, IsDate, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     @IsUUID()
@@ -33,25 +34,39 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     @IsString()
     hazard: string           
     
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_dispatch?: Date            
 
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_proceeding?: Date
     
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_arrival?: Date            
 
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_proceeding_hospital?: Date
     
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_arrival_hospital?: Date
     
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_back_to_base?: Date
     
+    @IsOptional()
     @IsDate()
+    @Transform(({ value }) => new Date(value))
     time_arrival_to_base?: Date
     
     @IsString()

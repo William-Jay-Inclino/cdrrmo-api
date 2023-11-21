@@ -37,7 +37,13 @@ export class DispatchService {
   async findAll() {
     return await this.prisma.dispatch.findMany({
       include: {
-        dispatcher: true,
+        dispatcher: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          }
+        },
         emergency: true,
         team: {
           include: { // include team leader
@@ -46,14 +52,12 @@ export class DispatchService {
                 id: true,
                 first_name: true,
                 last_name: true,
-              },
-              include: {
                 skills: {
                   include: {
                     TrainingSkill: true
                   }
                 }
-              }
+              },
             },
             teamMembers: { // include team members
               include: {
@@ -62,14 +66,12 @@ export class DispatchService {
                     id: true,
                     first_name: true,
                     last_name: true,
-                  },
-                  include: {
                     skills: {
                       include: {
                         TrainingSkill: true
                       }
                     }
-                  }
+                  },
                 }
               }
             }
@@ -84,7 +86,13 @@ export class DispatchService {
     const dispatch = this.prisma.dispatch.findUnique({
       where: {id},
       include: {
-        dispatcher: true,
+        dispatcher: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          }
+        },
         emergency: true,
         team: { // include team leader
           include: { 
@@ -93,14 +101,12 @@ export class DispatchService {
                 id: true,
                 first_name: true,
                 last_name: true,
-              },
-              include: {
                 skills: {
                   include: {
                     TrainingSkill: true
                   }
                 }
-              }
+              },
             },
             teamMembers: { // include team members
               include: {
@@ -109,8 +115,6 @@ export class DispatchService {
                     id: true,
                     first_name: true,
                     last_name: true,
-                  },
-                  include: {
                     skills: {
                       include: {
                         TrainingSkill: true
@@ -146,6 +150,7 @@ export class DispatchService {
 
       return await this.findOne(updatedDispatch.id);
     } catch (error) {
+      console.error('Prisma Error:', error);
       throw new InternalServerErrorException('Failed to update Dispatch.');
     }
   }
