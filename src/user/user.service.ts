@@ -6,11 +6,13 @@ import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
 
 @Injectable()
 export class UserService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService) {
+		console.log('=== UserService ===')
+	}
 
 
 	// password is hash using bcrypt
-	async create(createUserDto: CreateUserDto): Promise<User> {
+	async create(createUserDto: CreateUserDto) {
 		try {
 
 			const { skills, emergencyContacts, ...userData } = createUserDto;
@@ -68,8 +70,6 @@ export class UserService {
 			});
 
 			const addedUser = await this.findOne(result.id)
-			// remove password_hash in returning newly added user 
-			delete addedUser.password_hash 
 			return addedUser
 
 		} catch (error) {
@@ -84,7 +84,7 @@ export class UserService {
 	}
 
 	// I use the remove and add (Replace) approach for updating the user skills 
-	async update(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
+	async update(userId: string, updateUserDto: UpdateUserDto) {
 		console.log('update()', updateUserDto)
 		try {
 			const { skills, emergencyContacts, ...updatedUserData } = updateUserDto;
@@ -174,8 +174,7 @@ export class UserService {
 			// return result;
 
 			const updatedUser = await this.findOne(result.id)
-			// remove password_hash in returning newly added user 
-			delete updatedUser.password_hash 
+
 			return updatedUser
 
 		} catch (error) {
@@ -190,7 +189,95 @@ export class UserService {
 	}
 
 	async findAll() {
+		console.log('findAll()')
 		const users = await this.prisma.user.findMany({
+			select: {
+				id: true,
+				user_name: true,
+				user_level: true,
+				last_name: true,
+				first_name: true,
+				gender: true,
+				address: true,
+				birth_date: true,
+				contact_no: true,
+				blood_type: true,
+				status: true,
+				dispatch_status: true,
+				type: true,
+				bart_id: true,
+				cso_id: true,
+				po_id: true,
+				na_id: true,
+				Bart: true, 
+				Cso: true,  
+				Po: true,  
+				Na: true,  
+				teamMembers: true, 
+				teamLeader: true,  
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					}
+				}     
+			}
+		});
+
+		return users
+	}
+
+	async findOne(id: string) {
+		const user = await this.prisma.user.findUnique({
+			where: { id },
+			select: {
+				id: true,
+				user_name: true,
+				user_level: true,
+				last_name: true,
+				first_name: true,
+				gender: true,
+				address: true,
+				birth_date: true,
+				contact_no: true,
+				blood_type: true,
+				status: true,
+				dispatch_status: true,
+				type: true,
+				bart_id: true,
+				cso_id: true,
+				po_id: true,
+				na_id: true,
+				Bart: true, 
+				Cso: true,  
+				Po: true,  
+				Na: true,  
+				teamMembers: true, 
+				teamLeader: true,  
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					}
+				}     
+			}
+		});
+	
+		if (!user) {
+		  throw new NotFoundException('User not found.');
+		}
+
+		return user
+	}
+
+	async findUsersWithoutTeam() {
+		const users = await this.prisma.user.findMany({
+			where: {
+				teamLeader: null, // user is not a team leader
+				teamMembers: { // user is not a team member
+					none: {}
+				}
+			},	
 			include: {
 				Bart: true, 
 				Cso: true,  
@@ -211,40 +298,12 @@ export class UserService {
 
 			return {
 				...user,
-				['password_hash']: ''
 			}
 		});
 
 		console.log('usersWithoutPassword', usersWithoutPassword)
 
 		return usersWithoutPassword
-	}
-
-	async findOne(id: string): Promise<User>{
-		const user = await this.prisma.user.findUnique({
-			where: { id },
-			include: {
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
-				emergencyContacts: true,
-				skills: {
-					include: {
-						TrainingSkill: true,
-					}
-				}     
-			}
-		});
-	
-		if (!user) {
-		  throw new NotFoundException('User not found.');
-		}
-		
-		delete user.password_hash
-		return user;
 	}
 
 	async isUsernameTaken(user_name: string): Promise<boolean> {

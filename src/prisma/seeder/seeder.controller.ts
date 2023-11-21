@@ -69,9 +69,9 @@ export class SeederController {
                 return await this.seederService.seedTeamTbl();
             }
 
-            if(tableSeederDto.tbl_name === TableEnum.TEAM_MEMBER){
-                return await this.seederService.seedTeamMemberTbl();
-            }
+            // if(tableSeederDto.tbl_name === TableEnum.TEAM_MEMBER){
+            //     return await this.seederService.seedTeamMemberTbl();
+            // }
 
             if(tableSeederDto.tbl_name === TableEnum.USER_SKILL){
                 return await this.seederService.seedUserSkillTbl();

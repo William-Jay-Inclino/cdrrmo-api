@@ -13,6 +13,7 @@ import { UserModule } from './user/user.module';
 import { SharedModule } from './shared/shared.module';
 import { SeederModule } from './prisma/seeder/seeder.module';
 import { TeamModule } from './team/team.module';
+import { DispatchModule } from './dispatch/dispatch.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TeamModule } from './team/team.module';
     SharedModule,
     SeederModule,
     TeamModule,
+    DispatchModule,
   ],
   controllers: [AppController],
   providers: [

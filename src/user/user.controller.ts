@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { User } from '@prisma/client';
 
 @Controller('/api/v1/user')
 export class UserController {
@@ -25,17 +24,22 @@ export class UserController {
 
 	@Post()
 	@UsePipes(new ValidationPipe())
-	async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+	async create(@Body() createUserDto: CreateUserDto) {
 		return await this.userService.create(createUserDto);
 	}
 
 	@Get()
-	async findAll(): Promise<User[]> {
+	async findAll() {
 		return await this.userService.findAll();
 	}
 
+	@Get('/no-team')
+	async findUsersWithoutTeam() {
+		return await this.userService.findUsersWithoutTeam();
+	}
+
 	@Get(':id')
-	async findOne(@Param('id') id: string): Promise<User> {
+	async findOne(@Param('id') id: string) {
 		const user = await this.userService.findOne(id);
 		return user;
 	}
@@ -45,7 +49,7 @@ export class UserController {
 	async update(
 		@Param('id') id: string,
 		@Body() updateUserDto: UpdateUserDto
-	): Promise<User> {
+	) {
 		const updatedUser = await this.userService.update(id, updateUserDto);
 		return updatedUser;
 	}
