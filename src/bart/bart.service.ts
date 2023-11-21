@@ -10,7 +10,6 @@ export class BartService {
 
   async create(createBartDto: CreateBartDto) {
     try {
-      console.log('create success')
       return await this.prisma.bart.create({
         data: { ...createBartDto },
       });
