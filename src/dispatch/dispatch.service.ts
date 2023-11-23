@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -14,25 +14,51 @@ export class DispatchService {
 
   // this accepts single or multiple dispatch
   async create(createDispatchDtos: CreateDispatchDto[]): Promise<Dispatch[]> {
-
-    console.log('create()', createDispatchDtos)
+    let createdDispatches: Dispatch[] = [];
+  
     try {
-      const createdDispatches = await Promise.all(
-        createDispatchDtos.map(async (createDispatchDto) => {
-          const created = await this.prisma.dispatch.create({
-            data: { ...createDispatchDto },
+      await this.prisma.$transaction(async (prismaClient) => {
+        for (const createDispatchDto of createDispatchDtos) {
+          const parsedTimeOfCall = new Date(createDispatchDto.time_of_call);
+  
+          // Ensure that the parsedTimeOfCall is a valid date
+          if (isNaN(parsedTimeOfCall.getTime())) {
+            throw new BadRequestException('Invalid date format for time_of_call');
+          }
+  
+          const created = await prismaClient.dispatch.create({
+            data: {
+              ...createDispatchDto,
+              time_of_call: parsedTimeOfCall,
+            },
           });
-
-          return await this.findOne(created.id);
+  
+          // Find the associated Team and update its status to 2
+          await prismaClient.team.update({
+            where: { id: createDispatchDto.team_id },
+            data: { status: 2 },
+          });
+  
+          createdDispatches.push(created);
+        }
+      });
+  
+      // Fetch the created dispatches after the transaction is committed
+      createdDispatches = await Promise.all(
+        createdDispatches.map(async (createdDispatch) => {
+          return await this.findOne(createdDispatch.id);
         }),
       );
-
+  
       return createdDispatches;
     } catch (error) {
       console.error('Prisma Error:', error);
       throw new InternalServerErrorException('Failed to create Dispatch.');
     }
   }
+  
+  
+  
 
   async findAll() {
     return await this.prisma.dispatch.findMany({
@@ -81,9 +107,11 @@ export class DispatchService {
     });
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
+
+    console.log('Finding dispatch with ID:', id);
     
-    const dispatch = this.prisma.dispatch.findUnique({
+    const dispatch = await this.prisma.dispatch.findUnique({
       where: {id},
       include: {
         dispatcher: {
