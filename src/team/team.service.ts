@@ -42,6 +42,22 @@ export class TeamService {
     });
   }
 
+  async findAllActive(status: number) {
+    return await this.prisma.team.findMany({
+      where: {status},
+      include: {
+        team_leader: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          }
+        },
+        teamMembers: true
+      }
+    });
+  }
+
   async findOne(id: string) {
     const team = await this.prisma.team.findUnique({
       where: { id },
