@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, BadRequestException, ParseUUIDPipe } from '@nestjs/common';
 import { DispatchService } from './dispatch.service';
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
@@ -43,6 +43,15 @@ export class DispatchController {
 	): Promise<Dispatch> {
 		const updatedDispatch = await this.dispatchService.update(id, updateDispatchDto);
 		return updatedDispatch;
+	}
+
+	@Patch(':id/update-time/:fieldName')
+	async updateTimeField(
+	  @Param('id', new ParseUUIDPipe()) dispatchId: string,
+	  @Param('fieldName') fieldName: string,
+	): Promise<Dispatch> {
+		console.log('updateTimeField()', dispatchId, fieldName)
+	  return await this.dispatchService.updateTimeField(dispatchId, fieldName);
 	}
 
 	@Delete(':id')

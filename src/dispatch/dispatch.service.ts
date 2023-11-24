@@ -57,9 +57,6 @@ export class DispatchService {
     }
   }
   
-  
-  
-
   async findAll() {
     return await this.prisma.dispatch.findMany({
       include: {
@@ -196,7 +193,64 @@ export class DispatchService {
   }
 
   async truncate() {
+
+    // update all teams to active status as well
+    const updatedTeams = await this.prisma.team.updateMany({
+      where: {}, // Empty where clause matches all records
+      data: { status: 1 },
+    });
+
     return await this.prisma.dispatch.deleteMany({});
   }
+
+  async updateTimeField(dispatchId: string, fieldName: string, updateData: Record<string, any> = {}): Promise<Dispatch> {
+    const allowedFields = [
+      'time_proceeding_scene',
+      'time_arrival_scene',
+      'time_proceeding_hospital',
+      'time_arrival_hospital',
+      'time_proceeding_base',
+      'time_arrival_base',
+    ];
+
+    if (!allowedFields.includes(fieldName)) {
+      throw new Error(`Field ${fieldName} is not allowed for time update.`);
+    }
+
+    updateData[fieldName] = new Date(); // Set to the current date and time
+
+    // Update status based on the fieldName
+    switch (fieldName) {
+      case 'time_proceeding_scene':
+        updateData['status'] = 2;
+        break;
+      case 'time_arrival_scene':
+        updateData['status'] = 3;
+        break;
+      case 'time_proceeding_hospital':
+        updateData['status'] = 4;
+        break;
+      case 'time_arrival_hospital':
+        updateData['status'] = 5;
+        break;
+      case 'time_proceeding_base':
+        updateData['status'] = 6;
+        break;
+      case 'time_arrival_base':
+        updateData['status'] = 7;
+        break;
+      default:
+        break;
+    }
+
+    const updatedDispatch = await this.prisma.dispatch.update({
+      where: { id: dispatchId },
+      data: updateData,
+    });
+
+    return await this.findOne(updatedDispatch.id);
+  }
+
+
 
 }

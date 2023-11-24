@@ -37,17 +37,17 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_dispatch?: Date            
+    time_of_call?: Date            
 
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_proceeding?: Date
+    time_proceeding_scene?: Date
     
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_arrival?: Date            
+    time_arrival_scene?: Date            
 
     @IsOptional()
     @IsDate()
@@ -62,12 +62,12 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_back_to_base?: Date
+    time_proceeding_base?: Date
     
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_arrival_to_base?: Date
+    time_arrival_base?: Date
     
     @IsString()
     remarks: string          
