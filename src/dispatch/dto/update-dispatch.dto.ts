@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateDispatchDto } from './create-dispatch.dto';
-import { IsUUID, IsString, IsNotEmpty, IsNumber, IsDate, IsOptional } from 'class-validator';
+import { IsUUID, IsString, IsNotEmpty, IsNumber, IsDate, IsOptional, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
@@ -73,6 +73,10 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     remarks: string          
     
     @IsNumber()
-    status: number                   
+    status: number          
+    
+    @IsOptional()
+    @IsBoolean()
+    is_completed: boolean
 
 }

@@ -57,19 +57,37 @@ export class DispatchService {
     }
   }
   
-  async findAll() {
+
+  // this will get all dispatched records today or records that are not completed
+  
+  async findAll(): Promise<Dispatch[]> {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0); // Set the time to the beginning of the day
+  
     return await this.prisma.dispatch.findMany({
+      where: {
+        OR: [
+          {
+            created_at: {
+              gte: today,
+            },
+          },
+          {
+            is_completed: false,
+          },
+        ],
+      },
       include: {
         dispatcher: {
           select: {
             id: true,
             first_name: true,
             last_name: true,
-          }
+          },
         },
         emergency: true,
         team: {
-          include: { // include team leader
+          include: {
             team_leader: {
               select: {
                 id: true,
@@ -77,12 +95,12 @@ export class DispatchService {
                 last_name: true,
                 skills: {
                   include: {
-                    TrainingSkill: true
-                  }
-                }
+                    TrainingSkill: true,
+                  },
+                },
               },
             },
-            teamMembers: { // include team members
+            teamMembers: {
               include: {
                 member: {
                   select: {
@@ -91,16 +109,16 @@ export class DispatchService {
                     last_name: true,
                     skills: {
                       include: {
-                        TrainingSkill: true
-                      }
-                    }
+                        TrainingSkill: true,
+                      },
+                    },
                   },
-                }
-              }
-            }
-          }
-        }
-      }
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -243,14 +261,31 @@ export class DispatchService {
         break;
     }
 
-    const updatedDispatch = await this.prisma.dispatch.update({
-      where: { id: dispatchId },
-      data: updateData,
-    });
+    let updatedDispatch: Dispatch;
+
+    try {
+      await this.prisma.$transaction(async (prismaClient) => {
+        updatedDispatch = await prismaClient.dispatch.update({
+          where: { id: dispatchId },
+          data: updateData,
+        });
+
+        if (updateData['is_completed']) {
+          await prismaClient.team.update({
+            where: { id: updatedDispatch.team_id },
+            data: {
+              status: 1,
+            },
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Prisma Error:', error);
+      throw new InternalServerErrorException('Failed to update Dispatch.');
+    }
 
     return await this.findOne(updatedDispatch.id);
   }
-
 
 
 }
