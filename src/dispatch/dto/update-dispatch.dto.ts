@@ -77,6 +77,10 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     
     @IsOptional()
     @IsBoolean()
+    is_cancelled: boolean
+
+    @IsOptional()
+    @IsBoolean()
     is_completed: boolean
 
 }

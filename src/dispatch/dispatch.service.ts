@@ -3,6 +3,8 @@ import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Dispatch } from '@prisma/client';
+import { DispatchStatusEnum } from './entities';
+import { TeamStatusEnum } from 'src/team/entities/team.enum';
 
 @Injectable()
 export class DispatchService {
@@ -181,17 +183,36 @@ export class DispatchService {
   }
 
   async update(id: string, updateDispatchDto: UpdateDispatchDto): Promise<Dispatch | null> {
-    try {
-      // Check if the dispatch with the given ID exists
-      const existingDispatch = await this.findOne(id);
 
-      // Update the dispatch
-      const updatedDispatch = await this.prisma.dispatch.update({
-        where: { id },
-        data: updateDispatchDto,
+    console.log('updateDispatchDto', updateDispatchDto)
+    let updatedDispatch: Dispatch | null = null;
+    
+    // Check if the dispatch with the given ID exists
+    const existingDispatch = await this.findOne(id);
+
+    try {
+      await this.prisma.$transaction(async (prismaClient) => {
+        // Update the dispatch within the transaction
+        updatedDispatch = await prismaClient.dispatch.update({
+          where: { id },
+          data: updateDispatchDto,
+        });
+
+        // Check if status is ArrivedBase
+        if (updateDispatchDto.status && updateDispatchDto.status === DispatchStatusEnum.ArrivedBase) {
+          await prismaClient.team.update({
+            where: { id: updatedDispatch.team_id },
+            data: { status: TeamStatusEnum.Active },
+          });
+        }
       });
 
-      return await this.findOne(updatedDispatch.id);
+      // Fetch the updated dispatch after the transaction is committed
+      if (updatedDispatch) {
+        updatedDispatch = await this.findOne(updatedDispatch.id);
+      }
+
+      return updatedDispatch;
     } catch (error) {
       console.error('Prisma Error:', error);
       throw new InternalServerErrorException('Failed to update Dispatch.');
@@ -237,7 +258,9 @@ export class DispatchService {
 
     updateData[fieldName] = new Date(); // Set to the current date and time
 
-    // Update status based on the fieldName
+    // Check if the dispatch with the given ID exists
+    const existingDispatch = await this.findOne(dispatchId);
+      // Update status based on the fieldName
     switch (fieldName) {
       case 'time_proceeding_scene':
         updateData['status'] = 2;
@@ -270,11 +293,11 @@ export class DispatchService {
           data: updateData,
         });
 
-        if (updateData['is_completed']) {
+        if (updateData['status'] === DispatchStatusEnum.ArrivedBase) {
           await prismaClient.team.update({
             where: { id: updatedDispatch.team_id },
             data: {
-              status: 1,
+              status: TeamStatusEnum.Active,
             },
           });
         }

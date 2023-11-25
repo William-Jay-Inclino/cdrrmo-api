@@ -281,7 +281,10 @@ export class UserService {
 				// 	none: {}
 				// }
 			},	
-			include: {
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
 				Bart: true, 
 				Cso: true,  
 				Po: true,  
@@ -309,7 +312,10 @@ export class UserService {
 					none: {}
 				}
 			},	
-			include: {
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
 				Bart: true, 
 				Cso: true,  
 				Po: true,  
