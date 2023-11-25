@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
+import { UserLevelEnum } from 'src/shared/entities';
 
 @Injectable()
 export class UserService {
@@ -270,6 +271,36 @@ export class UserService {
 		return user
 	}
 
+	// User type (team leader) that has no assigned team
+	async findOrphanLeaders() {
+		const users = await this.prisma.user.findMany({
+			where: {
+				user_level: UserLevelEnum.TEAM_LEADER,
+				teamLeader: null, // user is not yet assigned to a team
+				// teamMembers: { 
+				// 	none: {}
+				// }
+			},	
+			include: {
+				Bart: true, 
+				Cso: true,  
+				Po: true,  
+				Na: true,  
+				teamMembers: true, 
+				teamLeader: true,  
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					}
+				}     
+			}
+		});
+
+		return users
+	}
+
+	// find all users without team
 	async findUsersWithoutTeam() {
 		const users = await this.prisma.user.findMany({
 			where: {
@@ -353,3 +384,13 @@ export class UserService {
 	}
 
 }
+
+
+
+
+/* 
+
+
+
+
+*/
