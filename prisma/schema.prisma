@@ -18,15 +18,17 @@ model Dispatch {
   description              String
   num_people_involved      Int
   hazard                   String
-  time_dispatch            DateTime?
-  time_proceeding          DateTime?
-  time_arrival             DateTime?
+  time_of_call             DateTime
+  time_proceeding_scene    DateTime?
+  time_arrival_scene       DateTime?
   time_proceeding_hospital DateTime?
   time_arrival_hospital    DateTime?
-  time_back_to_base        DateTime?
-  time_arrival_to_base     DateTime?
+  time_proceeding_base     DateTime?
+  time_arrival_base        DateTime?
   remarks                  String
   status                   Int
+  is_cancelled             Boolean   @default(false)
+  is_completed             Boolean   @default(false)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

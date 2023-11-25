@@ -1,8 +1,10 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Dispatch } from '@prisma/client';
+import { DispatchStatusEnum } from './entities';
+import { TeamStatusEnum } from 'src/team/entities/team.enum';
 
 @Injectable()
 export class DispatchService {
@@ -14,39 +16,80 @@ export class DispatchService {
 
   // this accepts single or multiple dispatch
   async create(createDispatchDtos: CreateDispatchDto[]): Promise<Dispatch[]> {
-
-    console.log('create()', createDispatchDtos)
+    let createdDispatches: Dispatch[] = [];
+  
     try {
-      const createdDispatches = await Promise.all(
-        createDispatchDtos.map(async (createDispatchDto) => {
-          const created = await this.prisma.dispatch.create({
-            data: { ...createDispatchDto },
+      await this.prisma.$transaction(async (prismaClient) => {
+        for (const createDispatchDto of createDispatchDtos) {
+          const parsedTimeOfCall = new Date(createDispatchDto.time_of_call);
+  
+          // Ensure that the parsedTimeOfCall is a valid date
+          if (isNaN(parsedTimeOfCall.getTime())) {
+            throw new BadRequestException('Invalid date format for time_of_call');
+          }
+  
+          const created = await prismaClient.dispatch.create({
+            data: {
+              ...createDispatchDto,
+              time_of_call: parsedTimeOfCall,
+            },
           });
-
-          return await this.findOne(created.id);
+  
+          // Find the associated Team and update its status to 2
+          await prismaClient.team.update({
+            where: { id: createDispatchDto.team_id },
+            data: { status: 2 },
+          });
+  
+          createdDispatches.push(created);
+        }
+      });
+  
+      // Fetch the created dispatches after the transaction is committed
+      createdDispatches = await Promise.all(
+        createdDispatches.map(async (createdDispatch) => {
+          return await this.findOne(createdDispatch.id);
         }),
       );
-
+  
       return createdDispatches;
     } catch (error) {
       console.error('Prisma Error:', error);
       throw new InternalServerErrorException('Failed to create Dispatch.');
     }
   }
+  
 
-  async findAll() {
+  // this will get all dispatched records today or records that are not completed
+  
+  async findAll(): Promise<Dispatch[]> {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0); // Set the time to the beginning of the day
+  
     return await this.prisma.dispatch.findMany({
+      where: {
+        OR: [
+          {
+            created_at: {
+              gte: today,
+            },
+          },
+          {
+            is_completed: false,
+          },
+        ],
+      },
       include: {
         dispatcher: {
           select: {
             id: true,
             first_name: true,
             last_name: true,
-          }
+          },
         },
         emergency: true,
         team: {
-          include: { // include team leader
+          include: {
             team_leader: {
               select: {
                 id: true,
@@ -54,12 +97,12 @@ export class DispatchService {
                 last_name: true,
                 skills: {
                   include: {
-                    TrainingSkill: true
-                  }
-                }
+                    TrainingSkill: true,
+                  },
+                },
               },
             },
-            teamMembers: { // include team members
+            teamMembers: {
               include: {
                 member: {
                   select: {
@@ -68,22 +111,24 @@ export class DispatchService {
                     last_name: true,
                     skills: {
                       include: {
-                        TrainingSkill: true
-                      }
-                    }
+                        TrainingSkill: true,
+                      },
+                    },
                   },
-                }
-              }
-            }
-          }
-        }
-      }
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
+
+    console.log('Finding dispatch with ID:', id);
     
-    const dispatch = this.prisma.dispatch.findUnique({
+    const dispatch = await this.prisma.dispatch.findUnique({
       where: {id},
       include: {
         dispatcher: {
@@ -138,17 +183,36 @@ export class DispatchService {
   }
 
   async update(id: string, updateDispatchDto: UpdateDispatchDto): Promise<Dispatch | null> {
-    try {
-      // Check if the dispatch with the given ID exists
-      const existingDispatch = await this.findOne(id);
 
-      // Update the dispatch
-      const updatedDispatch = await this.prisma.dispatch.update({
-        where: { id },
-        data: updateDispatchDto,
+    console.log('updateDispatchDto', updateDispatchDto)
+    let updatedDispatch: Dispatch | null = null;
+    
+    // Check if the dispatch with the given ID exists
+    const existingDispatch = await this.findOne(id);
+
+    try {
+      await this.prisma.$transaction(async (prismaClient) => {
+        // Update the dispatch within the transaction
+        updatedDispatch = await prismaClient.dispatch.update({
+          where: { id },
+          data: updateDispatchDto,
+        });
+
+        // Check if status is ArrivedBase
+        if (updateDispatchDto.status && updateDispatchDto.status === DispatchStatusEnum.ArrivedBase) {
+          await prismaClient.team.update({
+            where: { id: updatedDispatch.team_id },
+            data: { status: TeamStatusEnum.Active },
+          });
+        }
       });
 
-      return await this.findOne(updatedDispatch.id);
+      // Fetch the updated dispatch after the transaction is committed
+      if (updatedDispatch) {
+        updatedDispatch = await this.findOne(updatedDispatch.id);
+      }
+
+      return updatedDispatch;
     } catch (error) {
       console.error('Prisma Error:', error);
       throw new InternalServerErrorException('Failed to update Dispatch.');
@@ -168,7 +232,83 @@ export class DispatchService {
   }
 
   async truncate() {
+
+    // update all teams to active status as well
+    const updatedTeams = await this.prisma.team.updateMany({
+      where: {}, // Empty where clause matches all records
+      data: { status: 1 },
+    });
+
     return await this.prisma.dispatch.deleteMany({});
   }
+
+  async updateTimeField(dispatchId: string, fieldName: string, updateData: Record<string, any> = {}): Promise<Dispatch> {
+    const allowedFields = [
+      'time_proceeding_scene',
+      'time_arrival_scene',
+      'time_proceeding_hospital',
+      'time_arrival_hospital',
+      'time_proceeding_base',
+      'time_arrival_base',
+    ];
+
+    if (!allowedFields.includes(fieldName)) {
+      throw new Error(`Field ${fieldName} is not allowed for time update.`);
+    }
+
+    updateData[fieldName] = new Date(); // Set to the current date and time
+
+    // Check if the dispatch with the given ID exists
+    const existingDispatch = await this.findOne(dispatchId);
+      // Update status based on the fieldName
+    switch (fieldName) {
+      case 'time_proceeding_scene':
+        updateData['status'] = 2;
+        break;
+      case 'time_arrival_scene':
+        updateData['status'] = 3;
+        break;
+      case 'time_proceeding_hospital':
+        updateData['status'] = 4;
+        break;
+      case 'time_arrival_hospital':
+        updateData['status'] = 5;
+        break;
+      case 'time_proceeding_base':
+        updateData['status'] = 6;
+        break;
+      case 'time_arrival_base':
+        updateData['status'] = 7;
+        break;
+      default:
+        break;
+    }
+
+    let updatedDispatch: Dispatch;
+
+    try {
+      await this.prisma.$transaction(async (prismaClient) => {
+        updatedDispatch = await prismaClient.dispatch.update({
+          where: { id: dispatchId },
+          data: updateData,
+        });
+
+        if (updateData['status'] === DispatchStatusEnum.ArrivedBase) {
+          await prismaClient.team.update({
+            where: { id: updatedDispatch.team_id },
+            data: {
+              status: TeamStatusEnum.Active,
+            },
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Prisma Error:', error);
+      throw new InternalServerErrorException('Failed to update Dispatch.');
+    }
+
+    return await this.findOne(updatedDispatch.id);
+  }
+
 
 }

@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateDispatchDto } from './create-dispatch.dto';
-import { IsUUID, IsString, IsNotEmpty, IsNumber, IsDate, IsOptional } from 'class-validator';
+import { IsUUID, IsString, IsNotEmpty, IsNumber, IsDate, IsOptional, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
@@ -37,17 +37,17 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_dispatch?: Date            
+    time_of_call?: Date            
 
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_proceeding?: Date
+    time_proceeding_scene?: Date
     
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_arrival?: Date            
+    time_arrival_scene?: Date            
 
     @IsOptional()
     @IsDate()
@@ -62,17 +62,25 @@ export class UpdateDispatchDto extends PartialType(CreateDispatchDto) {
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_back_to_base?: Date
+    time_proceeding_base?: Date
     
     @IsOptional()
     @IsDate()
     @Transform(({ value }) => new Date(value))
-    time_arrival_to_base?: Date
+    time_arrival_base?: Date
     
     @IsString()
     remarks: string          
     
     @IsNumber()
-    status: number                   
+    status: number          
+    
+    @IsOptional()
+    @IsBoolean()
+    is_cancelled: boolean
+
+    @IsOptional()
+    @IsBoolean()
+    is_completed: boolean
 
 }

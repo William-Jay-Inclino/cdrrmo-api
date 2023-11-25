@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
@@ -32,6 +32,11 @@ export class TeamController {
 		return await this.teamService.findAll();
 	}
 
+	@Get('/status/:id')
+	async findAllActive(@Param('id', ParseIntPipe) id: number): Promise<Team[]> {
+		return await this.teamService.findAllActive(id);
+	}
+
 	@Get(':id')
 	async findOne(@Param('id') id: string): Promise<Team> {
 		const team = await this.teamService.findOne(id);
@@ -40,10 +45,7 @@ export class TeamController {
 
 	@Patch(':id')
 	@UsePipes(new ValidationPipe())
-	async update(
-		@Param('id') id: string,
-		@Body() updateTeamDto: UpdateTeamDto
-	): Promise<Team> {
+	async update(@Param('id') id: string,@Body() updateTeamDto: UpdateTeamDto): Promise<Team> {
 		const updatedTeam = await this.teamService.update(id, updateTeamDto);
 		return updatedTeam;
 	}

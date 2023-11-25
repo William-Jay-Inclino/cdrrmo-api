@@ -1,3 +1,4 @@
+import { Transform } from "class-transformer"
 import { IsNotEmpty, IsString, IsUUID, IsNumber, IsDate } from "class-validator"
 
 export class CreateDispatchDto {
@@ -36,6 +37,11 @@ export class CreateDispatchDto {
     remarks: string  
     
     @IsNumber()
-    status: number                   
+    status: number         
+    
+    @IsNotEmpty()
+    @IsDate()
+    @Transform(({ value }) => new Date(value))
+    time_of_call: Date
 
 }
