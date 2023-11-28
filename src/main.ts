@@ -18,6 +18,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:5173', 'http://cdrrmo-client:5173',
       'http://localhost:8000', 'http://cdrrmo-client:8000',
+      'http://localhost',
     ],
     methods: '*',
     credentials: true,
