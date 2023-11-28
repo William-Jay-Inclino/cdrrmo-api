@@ -38,6 +38,11 @@ export class UserController {
 		return await this.userService.findOrphanLeaders();
 	}
 
+	@Get('/dispatchers')
+	async findDispatchers() {
+		return await this.userService.findDispatchers();
+	}
+
 	@Get('/no-team')
 	async findUsersWithoutTeam() {
 		return await this.userService.findUsersWithoutTeam();

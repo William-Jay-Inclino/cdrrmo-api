@@ -331,16 +331,22 @@ export class UserService {
 			}
 		});
 
-		const usersWithoutPassword = users.map(user => {
+		return users
+	}
 
-			return {
-				...user,
+	async findDispatchers(){
+		const users = await this.prisma.user.findMany({
+			where: {
+				user_level: UserLevelEnum.DISPATCHER
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
 			}
-		});
+		})
 
-		console.log('usersWithoutPassword', usersWithoutPassword)
-
-		return usersWithoutPassword
+		return users
 	}
 
 	async isUsernameTaken(user_name: string): Promise<boolean> {
