@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
 import { NaService } from './na.service';
 import { CreateNaDto } from './dto/create-na.dto';
 import { UpdateNaDto } from './dto/update-na.dto';
 import { Na } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards';
 
+@UseGuards(JwtAuthGuard)
 @Controller('/api/v1/na')
 export class NaController {
 	constructor(private readonly naService: NaService) {}

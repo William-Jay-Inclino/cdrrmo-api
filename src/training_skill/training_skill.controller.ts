@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
 import { TrainingSkillService } from './training_skill.service';
 import { CreateTrainingSkillDto } from './dto/create_training_skill.dto';
 import { UpdateTrainingSkillDto } from './dto/update_training_skill.dto';
 import { TrainingSkill } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards';
 
+@UseGuards(JwtAuthGuard)
 @Controller('/api/v1/training-skill')
 export class TrainingSkillController {
 	constructor(private readonly trainingSkillService: TrainingSkillService) {}

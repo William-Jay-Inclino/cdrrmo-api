@@ -14,6 +14,7 @@ import { SharedModule } from './shared/shared.module';
 import { SeederModule } from './prisma/seeder/seeder.module';
 import { TeamModule } from './team/team.module';
 import { DispatchModule } from './dispatch/dispatch.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { DispatchModule } from './dispatch/dispatch.module';
     SeederModule,
     TeamModule,
     DispatchModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, ValidationPipe, UsePipes, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, ValidationPipe, UsePipes, HttpCode, UseGuards } from '@nestjs/common';
 import { EmergencyService } from './emergency.service';
 import { CreateEmergencyDto } from './dto/create-emergency.dto';
 import { UpdateEmergencyDto } from './dto/update-emergency.dto';
 import { Emergency } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards';
 
+@UseGuards(JwtAuthGuard)
 @Controller('/api/v1/emergency')
 export class EmergencyController {
     constructor(private readonly emergencyService: EmergencyService) {}

@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
 import { BartService } from './bart.service';
 import { CreateBartDto } from './dto/create-bart.dto';
 import { UpdateBartDto } from './dto/update-bart.dto';
 import { Bart } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards';
 
+@UseGuards(JwtAuthGuard)
 @Controller('/api/v1/bart')
 export class BartController {
 	constructor(private readonly bartService: BartService) {}

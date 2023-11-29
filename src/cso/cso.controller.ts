@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
 import { CsoService } from './cso.service';
 import { CreateCsoDto } from './dto/create-cso.dto';
 import { UpdateCsoDto } from './dto/update-cso.dto';
 import { Cso } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards';
 
+@UseGuards(JwtAuthGuard)
 @Controller('/api/v1/cso')
 export class CsoController {
 	constructor(private readonly csoService: CsoService) {}
