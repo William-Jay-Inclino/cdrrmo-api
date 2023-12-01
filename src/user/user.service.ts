@@ -193,7 +193,7 @@ export class UserService {
 		console.log('findAll()')
 
 		const skip = (page - 1) * pageSize;
-		
+
 		const users = await this.prisma.user.findMany({
 			select: {
 				id: true,
@@ -234,7 +234,14 @@ export class UserService {
     		take: pageSize,
 		});
 
-		return users
+		const totalUsers = await this.prisma.user.count();
+
+		return {
+			users,
+			totalUsers,
+			currentPage: page,
+			totalPages: Math.ceil(totalUsers / pageSize),
+		}
 	}
 
 	async findOne(id: string) {
