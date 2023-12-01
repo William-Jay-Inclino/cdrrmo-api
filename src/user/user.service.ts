@@ -189,8 +189,11 @@ export class UserService {
 		}
 	}
 
-	async findAll() {
+	async findAll(page: number = 1, pageSize: number = 10) {
 		console.log('findAll()')
+
+		const skip = (page - 1) * pageSize;
+		
 		const users = await this.prisma.user.findMany({
 			select: {
 				id: true,
@@ -227,6 +230,8 @@ export class UserService {
 				{ last_name: 'asc' }, 
 				{ first_name: 'asc' },
 			],
+			skip,
+    		take: pageSize,
 		});
 
 		return users

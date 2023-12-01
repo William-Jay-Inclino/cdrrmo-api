@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
@@ -31,8 +31,11 @@ export class UserController {
 	}
 
 	@Get()
-	async findAll() {
-		return await this.userService.findAll();
+	async findAll(
+	  @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+	  @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number,
+	) {
+	  return await this.userService.findAll(page, pageSize);
 	}
 
 	@Get('/orphan-team-leaders')
