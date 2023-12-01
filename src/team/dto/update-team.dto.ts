@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateTeamDto } from './create-team.dto';
 import { IsEnum, IsNotEmpty, IsString, Length } from 'class-validator';
-import { TeamStatusEnum } from '../../shared/entities';
+import { TeamStatusEnum } from '../entities';
 
 export class UpdateTeamDto extends PartialType(CreateTeamDto) {
 

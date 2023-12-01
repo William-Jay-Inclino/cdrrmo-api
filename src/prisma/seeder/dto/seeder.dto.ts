@@ -1,5 +1,5 @@
 import { IsEnum } from "class-validator";
-import { TableEnum } from "../../../shared/entities";
+import { TableEnum } from "../entities";
 
 
 export class TableSeederDto {

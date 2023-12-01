@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
-import { UserLevelEnum } from 'src/shared/entities';
+import { UserLevelEnum, UserStatusEnum } from './entities';
 
 @Injectable()
 export class UserService {
@@ -222,7 +222,11 @@ export class UserService {
 						TrainingSkill: true,
 					}
 				}     
-			}
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
 		});
 
 		return users
@@ -289,11 +293,9 @@ export class UserService {
 	async findOrphanLeaders() {
 		const users = await this.prisma.user.findMany({
 			where: {
-				user_level: UserLevelEnum.TEAM_LEADER,
+				user_level: UserLevelEnum.Team_Leader,
 				teamLeader: null, // user is not yet assigned to a team
-				// teamMembers: { 
-				// 	none: {}
-				// }
+				status: UserStatusEnum.Active
 			},	
 			select: {
 				id: true,
@@ -311,7 +313,11 @@ export class UserService {
 						TrainingSkill: true,
 					}
 				}     
-			}
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
 		});
 
 		return users
@@ -322,6 +328,7 @@ export class UserService {
 		const users = await this.prisma.user.findMany({
 			where: {
 				teamLeader: null, // user is not a team leader
+				status: UserStatusEnum.Active,
 				teamMembers: { // user is not a team member
 					none: {}
 				}
@@ -342,7 +349,11 @@ export class UserService {
 						TrainingSkill: true,
 					}
 				}     
-			}
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
 		});
 
 		return users
@@ -351,13 +362,18 @@ export class UserService {
 	async findDispatchers(){
 		const users = await this.prisma.user.findMany({
 			where: {
-				user_level: UserLevelEnum.DISPATCHER
+				user_level: UserLevelEnum.Dispatcher,
+				status: UserStatusEnum.Active
 			},
 			select: {
 				id: true,
 				first_name: true,
 				last_name: true,
-			}
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
 		})
 
 		return users

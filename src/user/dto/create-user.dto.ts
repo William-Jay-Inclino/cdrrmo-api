@@ -1,8 +1,9 @@
-import { DispatchStatusEnum, GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from '../../shared/entities';
+import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from '../entities'
 import { IsEnum, IsString, IsDate, IsOptional, IsNotEmpty, Length, IsArray, Validate } from 'class-validator';
 import { IsValidUserSkillDtoArray, IsValidEmergencyContactDtoArray } from '../validators';
 import { Transform } from 'class-transformer';
 import { EmergencyContactDto, UserSkillDto } from '.';
+import { DispatchStatusEnum } from 'src/dispatch/entities';
 
 export class CreateUserDto {
     @IsNotEmpty()

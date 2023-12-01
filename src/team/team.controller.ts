@@ -34,9 +34,9 @@ export class TeamController {
 		return await this.teamService.findAll();
 	}
 
-	@Get('/status/:id')
-	async findAllActive(@Param('id', ParseIntPipe) id: number): Promise<Team[]> {
-		return await this.teamService.findAllActive(id);
+	@Get('/status')
+	async findAllActive(): Promise<Team[]> {
+		return await this.teamService.findAllActive();
 	}
 
 	@Get(':id')

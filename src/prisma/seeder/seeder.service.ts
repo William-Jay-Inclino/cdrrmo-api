@@ -3,7 +3,8 @@ import { PrismaService } from '../prisma.service';
 import * as mockData from './mock-data';
 import { Bart, Cso, Emergency, Na, Po, SkillCertificate, Team, TeamMember, TrainingSkill, User, UserSkill } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { GenderEnum, TeamStatusEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from '../../shared/entities';
+import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from 'src/user/entities';
+import { TeamStatusEnum } from 'src/team/entities';
 @Injectable()
 export class SeederService {
 
@@ -202,33 +203,33 @@ export class SeederService {
         const seedData: User[] = []
 
         const userLevelValues = [
-            UserLevelEnum.ADMIN,
-            UserLevelEnum.DISPATCHER,
-            UserLevelEnum.TEAM_LEADER,
-            UserLevelEnum.FIELD_OPERATOR,
+            UserLevelEnum.Admin,
+            UserLevelEnum.Dispatcher,
+            UserLevelEnum.Team_Leader,
+            UserLevelEnum.Field_Operator,
         ]
 
         const genderValues = [
-            GenderEnum.FEMALE,
-            GenderEnum.MALE,
+            GenderEnum.Female,
+            GenderEnum.Male,
         ]
 
         const bloodTypeValues = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
         const userStatusValues = [
-            UserStatusEnum.ACTIVE,
-            UserStatusEnum.INACTIVE,
+            UserStatusEnum.Active,
+            UserStatusEnum.Inactive,
         ]
 
         const userTypeValues = [
-            UserTypeEnum.LGU_CASUAL,
-            UserTypeEnum.LGU_JOB_ORDER,
-            UserTypeEnum.LGU_REGULAR,
+            UserTypeEnum.LGU_Casual,
+            UserTypeEnum.LGU_Job_Order,
+            UserTypeEnum.LGU_Regular,
             UserTypeEnum.ACDV_BART,
             UserTypeEnum.ACDV_CSO,
             UserTypeEnum.ACDV_PO,
             UserTypeEnum.ACDV_INDIVIDUAL,
-            UserTypeEnum.NA,
+            UserTypeEnum.National_Agency,
         ]
 
         let csos = this.csos
@@ -284,7 +285,7 @@ export class SeederService {
                 data.po_id = pos[Math.floor(Math.random() * pos.length)].id
             }
 
-            if(data.type === UserTypeEnum.NA){
+            if(data.type === UserTypeEnum.National_Agency){
                 data.na_id = nas[Math.floor(Math.random() * nas.length)].id
             }
 
@@ -327,7 +328,7 @@ export class SeederService {
             const data = {} as Team 
             data.id = faker.string.uuid()
             data.name = i 
-            data.status = TeamStatusEnum.ACTIVE
+            data.status = TeamStatusEnum.Active
             
             data.team_leader_id = users[Math.floor(Math.random() * users.length)].id
 

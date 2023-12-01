@@ -10,7 +10,6 @@ import { CsoModule } from './cso/cso.module';
 import { PoModule } from './po/po.module';
 import { NaModule } from './na/na.module';
 import { UserModule } from './user/user.module';
-import { SharedModule } from './shared/shared.module';
 import { SeederModule } from './prisma/seeder/seeder.module';
 import { TeamModule } from './team/team.module';
 import { DispatchModule } from './dispatch/dispatch.module';
@@ -29,7 +28,6 @@ import { AuthModule } from './auth/auth.module';
     PoModule, 
     NaModule, 
     UserModule, 
-    SharedModule,
     SeederModule,
     TeamModule,
     DispatchModule,

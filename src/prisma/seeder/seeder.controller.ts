@@ -1,7 +1,9 @@
 import { Controller, Post, Res, HttpStatus, HttpCode, Param, UsePipes, ValidationPipe, Body } from '@nestjs/common';
 import { SeederService } from './seeder.service';
 import { TableSeederDto } from './dto';
-import { TableEnum } from '../../shared/entities';
+import { TableEnum } from './entities';
+
+
 
 @Controller('/api/v1/seeder')
 export class SeederController {

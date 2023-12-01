@@ -93,6 +93,8 @@ model Team {
   updated_at DateTime   @updatedAt
   Dispatch   Dispatch[]
 
+  is_deleted Boolean @default(false)
+
   @@map("teams")
 }
 
