@@ -74,6 +74,11 @@ export class TeamService {
             id: true,
             first_name: true,
             last_name: true,
+            type: true,
+            Bart: {select: {name: true}},
+            Cso: {select: {name: true}},
+            Po: {select: {name: true}},
+            Na: {select: {name: true}},
             skills: {
               include: {
                 TrainingSkill: true
