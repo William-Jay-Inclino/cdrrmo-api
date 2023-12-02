@@ -31,3 +31,10 @@ export enum DistinctUserTypeEnum{
     ACDV = 2,
     National_Agency = 3,
 }
+
+
+export enum SearchFieldEnum{
+    Id = 'user_id',
+    Lastname = 'last_name',
+    Firstname = 'first_name',
+}

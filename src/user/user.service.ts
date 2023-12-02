@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
-import { UserLevelEnum, UserStatusEnum } from './entities';
+import { SearchFieldEnum, UserLevelEnum, UserStatusEnum } from './entities';
 
 @Injectable()
 export class UserService {
@@ -188,60 +188,81 @@ export class UserService {
 			}
 		}
 	}
-
-	async findAll(page: number = 1, pageSize: number = 10) {
-		console.log('findAll()')
-
+	
+	async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
+		console.log('findAll()');
+	  
 		const skip = (page - 1) * pageSize;
-
-		const users = await this.prisma.user.findMany({
-			select: {
-				id: true,
-				user_name: true,
-				user_level: true,
-				last_name: true,
-				first_name: true,
-				gender: true,
-				address: true,
-				birth_date: true,
-				contact_no: true,
-				blood_type: true,
-				status: true,
-				dispatch_status: true,
-				type: true,
-				bart_id: true,
-				cso_id: true,
-				po_id: true,
-				na_id: true,
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
-				emergencyContacts: true,
-				skills: {
-					include: {
-						TrainingSkill: true,
-					}
-				}     
-			},
-			orderBy: [
-				{ last_name: 'asc' }, 
-				{ first_name: 'asc' },
-			],
-			skip,
-    		take: pageSize,
-		});
-
-		const totalUsers = await this.prisma.user.count();
-
-		return {
-			users,
-			totalUsers,
-			currentPage: page,
-			totalPages: Math.ceil(totalUsers / pageSize),
+	  
+		let whereCondition: Record<string, any> = {};
+	  
+		if (searchField && searchValue !== undefined) {
+		  if (searchField === 'user_id') {
+			const numericSearchValue = parseInt(searchValue as string, 10);
+			if (!isNaN(numericSearchValue)) {
+				whereCondition = { user_id: numericSearchValue };
+			} else {
+				throw new Error('Invalid user_id. Must be a number.');
+			}
+		  } else if (searchField === 'first_name' || searchField === 'last_name') {
+			whereCondition = {
+			  [searchField]: {
+				contains: searchValue,
+				mode: 'insensitive',
+			  },
+			};
+		  }
 		}
+	  
+		const users = await this.prisma.user.findMany({
+		  select: {
+			id: true,
+			user_id: true,
+			user_name: true,
+			user_level: true,
+			last_name: true,
+			first_name: true,
+			gender: true,
+			address: true,
+			birth_date: true,
+			contact_no: true,
+			blood_type: true,
+			status: true,
+			dispatch_status: true,
+			type: true,
+			bart_id: true,
+			cso_id: true,
+			po_id: true,
+			na_id: true,
+			Bart: true,
+			Cso: true,
+			Po: true,
+			Na: true,
+			teamMembers: true,
+			teamLeader: true,
+			emergencyContacts: true,
+			skills: {
+			  include: {
+				TrainingSkill: true,
+			  },
+			},
+		  },
+		  orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
+		  skip,
+		  take: pageSize,
+		  where: whereCondition,
+		});
+	  
+		const totalUsers = await this.prisma.user.count({
+			where: whereCondition,
+		});
+	  
+		return {
+		  users,
+		  totalUsers,
+		  currentPage: page,
+		  totalPages: Math.ceil(totalUsers / pageSize),
+		};
 	}
 
 	async findOne(id: string) {
@@ -250,6 +271,7 @@ export class UserService {
 			where: { id },
 			select: {
 				id: true,
+				user_id: true,
 				user_name: true,
 				user_level: true,
 				last_name: true,
@@ -311,6 +333,7 @@ export class UserService {
 			},	
 			select: {
 				id: true,
+				user_id: true,
 				first_name: true,
 				last_name: true,
 				Bart: true, 
@@ -347,6 +370,7 @@ export class UserService {
 			},	
 			select: {
 				id: true,
+				user_id: true,
 				first_name: true,
 				last_name: true,
 				Bart: true, 

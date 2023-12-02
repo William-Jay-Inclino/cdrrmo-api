@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
+import { SearchQueryDto } from './dto/search-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/user')
@@ -31,11 +32,8 @@ export class UserController {
 	}
 
 	@Get()
-	async findAll(
-	  @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-	  @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number,
-	) {
-	  return await this.userService.findAll(page, pageSize);
+	async findAll(@Query() query: SearchQueryDto) {
+	  return await this.userService.findAll(query.page, query.pageSize, query.searchField, query.searchValue);
 	}
 
 	@Get('/orphan-team-leaders')
