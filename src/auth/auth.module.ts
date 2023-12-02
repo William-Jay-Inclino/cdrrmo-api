@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LocalStrategy, JwtStrategy } from './strategies';
 import { UserModule } from '../user/user.module';
+import { AbilityFactory } from './abilities/ability.factory';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { UserModule } from '../user/user.module';
     UserModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, LocalStrategy, JwtStrategy, AbilityFactory],
+  exports: [AuthService, AbilityFactory],
 })
 export class AuthModule {}

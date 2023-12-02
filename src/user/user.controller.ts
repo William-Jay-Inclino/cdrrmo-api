@@ -1,15 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-@ApiBearerAuth() 
-@UseGuards(JwtAuthGuard)
-@Controller('/api/v1/user')
-@ApiTags('user')
+import { CheckAbilities } from 'src/auth/abilities/ability.decorator';
+import { AbilitiesGuard } from 'src/auth/guards/abilities.guard';
+import { ReadUserAbility } from 'src/auth/abilities/ability';
+@ApiBearerAuth() // used for swagger 
+@ApiTags('user') // used for swagger 
+@UseGuards(JwtAuthGuard, AbilitiesGuard) // authentication = JwtAuthGuard and authorization = AbilitiesGuard
+@Controller('/api/v1/user') // route
+
 export class UserController {
-	constructor(private readonly userService: UserService) {}
+	constructor(
+		private readonly userService: UserService,
+	) {}
 
 	@Delete('/truncate')
 	@HttpCode(HttpStatus.NO_CONTENT)
@@ -34,8 +40,9 @@ export class UserController {
 	}
 
 	@Get()
+	@CheckAbilities( new ReadUserAbility() )
 	async findAll(@Query() query: SearchQueryDto) {
-	  return await this.userService.findAll(query.page, query.pageSize, query.searchField, query.searchValue);
+	  	return await this.userService.findAll(query.page, query.pageSize, query.searchField, query.searchValue);
 	}
 
 	@Get('/orphan-team-leaders')
