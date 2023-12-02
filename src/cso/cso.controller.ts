@@ -4,9 +4,11 @@ import { CreateCsoDto } from './dto/create-cso.dto';
 import { UpdateCsoDto } from './dto/update-cso.dto';
 import { Cso } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/cso')
+@ApiTags('cso')
 export class CsoController {
 	constructor(private readonly csoService: CsoService) {}
 

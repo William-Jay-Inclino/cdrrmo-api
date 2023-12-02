@@ -3,9 +3,11 @@ import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
 import { SearchQueryDto } from './dto/search-query.dto';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/user')
+@ApiTags('user')
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 

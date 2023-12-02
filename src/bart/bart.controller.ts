@@ -4,9 +4,11 @@ import { CreateBartDto } from './dto/create-bart.dto';
 import { UpdateBartDto } from './dto/update-bart.dto';
 import { Bart } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/bart')
+@ApiTags('bart')
 export class BartController {
 	constructor(private readonly bartService: BartService) {}
 

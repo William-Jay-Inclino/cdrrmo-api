@@ -1,10 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
 import { PoService } from './po.service';
 import { CreatePoDto } from './dto/create-po.dto';
 import { UpdatePoDto } from './dto/update-po.dto';
 import { Po } from '@prisma/client';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guards';
+@ApiBearerAuth() 
+@UseGuards(JwtAuthGuard)
 @Controller('/api/v1/po')
+@ApiTags('po')
 export class PoController {
 	constructor(private readonly poService: PoService) {}
 

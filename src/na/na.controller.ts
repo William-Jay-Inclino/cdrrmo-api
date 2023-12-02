@@ -4,9 +4,12 @@ import { CreateNaDto } from './dto/create-na.dto';
 import { UpdateNaDto } from './dto/update-na.dto';
 import { Na } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/na')
+@ApiTags('na')
 export class NaController {
 	constructor(private readonly naService: NaService) {}
 

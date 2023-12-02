@@ -4,9 +4,12 @@ import { CreateTrainingSkillDto } from './dto/create_training_skill.dto';
 import { UpdateTrainingSkillDto } from './dto/update_training_skill.dto';
 import { TrainingSkill } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/training-skill')
+@ApiTags('training-skill')
 export class TrainingSkillController {
 	constructor(private readonly trainingSkillService: TrainingSkillService) {}
 

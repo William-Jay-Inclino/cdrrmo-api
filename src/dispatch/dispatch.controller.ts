@@ -4,9 +4,11 @@ import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
 import { Dispatch } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/dispatch')
+@ApiTags('dispatch')
 export class DispatchController {
 	constructor(private readonly dispatchService: DispatchService) {}
 

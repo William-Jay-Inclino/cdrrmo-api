@@ -4,9 +4,11 @@ import { CreateEmergencyDto } from './dto/create-emergency.dto';
 import { UpdateEmergencyDto } from './dto/update-emergency.dto';
 import { Emergency } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards';
-
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/emergency')
+@ApiTags('emergency')
 export class EmergencyController {
     constructor(private readonly emergencyService: EmergencyService) {}
 

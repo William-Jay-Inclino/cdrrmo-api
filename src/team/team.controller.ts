@@ -5,9 +5,12 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from '@prisma/client';
 import { TeamMemberDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth() 
 @UseGuards(JwtAuthGuard)
 @Controller('/api/v1/team')
+@ApiTags('team')
 export class TeamController {
 	constructor(private readonly teamService: TeamService) {}
 
