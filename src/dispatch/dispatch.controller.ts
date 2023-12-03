@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, BadRequestException, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, BadRequestException, ParseUUIDPipe, UseGuards, Req } from '@nestjs/common';
 import { DispatchService } from './dispatch.service';
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
@@ -36,9 +36,9 @@ export class DispatchController {
 
 	@Get()
 	@CheckAbilities( new ReadDispatchAbility() )
-	async findAll(): Promise<Dispatch[]> {
+	async findAll(@Req() req): Promise<Dispatch[]> {
 		console.log('findAll()')
-		return await this.dispatchService.findAll();
+		return await this.dispatchService.findAll({currentUser: req.user});
 	}
 
 	@Get(':id')

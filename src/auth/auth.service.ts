@@ -25,7 +25,7 @@ export class AuthService {
   }
 
   async validateUserById(userId: string): Promise<any | undefined> {
-    console.log('AuthService: validateUserById()', userId)
+    console.log('AuthService: validateUserById()')
     return this.userService.findOne(userId)
   }
 

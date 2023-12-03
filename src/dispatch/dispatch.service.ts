@@ -2,9 +2,10 @@ import { BadRequestException, Injectable, InternalServerErrorException, NotFound
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { Dispatch } from '@prisma/client';
+import { Dispatch, User } from '@prisma/client';
 import { DispatchStatusEnum } from './entities';
 import { TeamStatusEnum } from 'src/team/entities/team.enum';
+import { UserLevelEnum } from 'src/user/entities';
 
 @Injectable()
 export class DispatchService {
@@ -62,11 +63,11 @@ export class DispatchService {
 
   // this will get all dispatched records today or records that are not completed
   
-  async findAll(): Promise<Dispatch[]> {
+  async findAll(payload: {currentUser: User}): Promise<Dispatch[]> {
     const today = new Date();
-    today.setUTCHours(8, 0, 0, 0); // Set the time to 12:00 AM in Philippine time
-  
-    return await this.prisma.dispatch.findMany({
+    today.setUTCHours(8, 0, 0, 0);
+
+    const query = {
       where: {
         OR: [
           {
@@ -96,10 +97,10 @@ export class DispatchService {
                 first_name: true,
                 last_name: true,
                 type: true,
-                Bart: {select: {name: true}},
-                Cso: {select: {name: true}},
-                Po: {select: {name: true}},
-                Na: {select: {name: true}},
+                Bart: { select: { name: true } },
+                Cso: { select: { name: true } },
+                Po: { select: { name: true } },
+                Na: { select: { name: true } },
                 skills: {
                   include: {
                     TrainingSkill: true,
@@ -126,7 +127,17 @@ export class DispatchService {
           },
         },
       },
-    });
+    };
+
+    // Check if the currentUser is an admin
+    if (payload.currentUser.user_level === UserLevelEnum.Admin) {
+      return await this.prisma.dispatch.findMany(query);
+    }
+
+    // If not admin, add additional filtering for dispatcher_id
+    query.where['dispatcher_id'] = payload.currentUser.user_id.toString();
+
+    return await this.prisma.dispatch.findMany(query);
   }
 
   async findOne(id: string) {
