@@ -1,5 +1,5 @@
 // Civic Social Organization
-export interface ICSO{
+export class CSO{
     id: string
     name: string
     description: string

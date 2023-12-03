@@ -1,4 +1,4 @@
-export interface INa{
+export class Na{
     id: string
     name: string
     description: string

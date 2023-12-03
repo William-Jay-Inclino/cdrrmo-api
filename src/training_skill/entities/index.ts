@@ -1,1 +1,0 @@
-export * from './training_skill.entity'

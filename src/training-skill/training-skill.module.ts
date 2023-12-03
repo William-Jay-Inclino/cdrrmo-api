@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { TrainingSkillService } from './training_skill.service';
-import { TrainingSkillController } from './training_skill.controller';
+import { TrainingSkillService } from './training-skill.service';
+import { TrainingSkillController } from './training-skill.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({

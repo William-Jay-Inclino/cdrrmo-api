@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
@@ -7,6 +7,7 @@ import { LocalStrategy, JwtStrategy } from './strategies';
 import { UserModule } from '../user/user.module';
 import { AbilityFactory } from './abilities/ability.factory';
 
+@Global()
 @Module({
   imports: [
     PassportModule,

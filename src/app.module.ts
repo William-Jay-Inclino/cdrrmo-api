@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
-import { TrainingSkillModule } from './training_skill/training_skill.module';
+import { TrainingSkillModule } from './training-skill/training-skill.module';
 import { EmergencyModule } from './emergency/emergency.module';
 import { BartModule } from './bart/bart.module';
 import { CsoModule } from './cso/cso.module';

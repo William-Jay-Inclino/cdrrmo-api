@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTrainingSkillDto } from './dto/create_training_skill.dto';
-import { UpdateTrainingSkillDto } from './dto/update_training_skill.dto';
+import { CreateTrainingSkillDto } from './dto/create-training-skill.dto';
+import { UpdateTrainingSkillDto } from './dto/update-training-skill.dto';
 import { TrainingSkill } from '@prisma/client';
 
 @Injectable()

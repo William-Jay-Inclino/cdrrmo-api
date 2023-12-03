@@ -1,5 +1,5 @@
 // People's Organization
-export interface IPO{
+export class PO{
     id: string
     name: string
     description: string

@@ -2,12 +2,12 @@
 
 import { DispatchStatusEnum } from "src/dispatch/entities"
 import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from "."
-import { IBART } from "src/bart/entities"
-import { ICSO } from "src/cso/entities"
-import { IPO } from "src/po/entities"
-import { INa } from "src/na/entities"
-import { ITeam, ITeamMember } from "src/team/entities"
-import { ITrainingSkill } from "src/training_skill/entities"
+import { BART } from "src/bart/entities"
+import { CSO } from "src/cso/entities"
+import { PO } from "src/po/entities"
+import { Na } from "src/na/entities"
+import { Team, TeamMember } from "src/team/entities"
+import { TrainingSkill } from "src/training-skill/entities"
 
 export class User {
     id: string
@@ -26,25 +26,25 @@ export class User {
     dispatch_status?: DispatchStatusEnum 
     type: UserTypeEnum
 
-    emergencyContacts?: IEmergencyContact[]
+    emergencyContacts?: EmergencyContact[]
 
     bart_id?: string | null
     cso_id?: string | null 
     po_id?: string | null 
     na_id?: string | null 
 
-    Bart?: IBART
-    Cso?: ICSO 
-    Po?: IPO
-    Na?: INa
+    Bart?: BART
+    Cso?: CSO 
+    Po?: PO
+    Na?: Na
 
-    teamMembers?: ITeamMember[]
-    teamLeader?: ITeam
-    skills: IUserSkill[]
+    teamMembers?: TeamMember[]
+    teamLeader?: Team
+    skills: UserSkill[]
     
 }
 
-export interface IEmergencyContact{
+export class EmergencyContact{
     id: string
     user: User
     user_id: string
@@ -60,19 +60,19 @@ export interface IEmergencyContact{
 }
 
 
-export interface IUserSkill{
+export class UserSkill{
     id: string 
     user: User 
     user_id: string 
-    TrainingSkill: ITrainingSkill
+    TrainingSkill: TrainingSkill
     training_skill_id: string 
-    SkillCertificate: ISkillCertificate[]
+    SkillCertificate: SkillCertificate[]
 }
 
 
-export interface ISkillCertificate{
+export class SkillCertificate{
     id: string 
-    userSkill: IUserSkill
+    userSkill: UserSkill
     user_skill_id: string 
     certificateUrl: string 
 }

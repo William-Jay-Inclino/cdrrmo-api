@@ -1,15 +1,28 @@
 import { PureAbility, InferSubjects } from "@casl/ability";
-import { User } from "src/user/entities";
+import { User, UserSkill } from "src/user/entities";
+import { Action } from ".";
+import { CSO } from "src/cso/entities";
+import { BART } from "src/bart/entities"
+import { Dispatch } from "src/dispatch/entities";
+import { Emergency } from "src/emergency/entities";
+import { Na } from "src/na/entities";
+import { PO } from "src/po/entities";
+import { Team, TeamMember } from "src/team/entities";
+import { TrainingSkill } from "src/training-skill/entities";
 
-export enum Action {
-    Manage = 'manage',
-    Create = 'create',
-    Read = 'read',
-    Update = 'update',
-    Delete = 'delete',
-}
-
-export type Subjects = InferSubjects<typeof User> | 'all' // TODO: Add each model in typeof User | Dispatch | Team etc...
+export type Subjects = InferSubjects<
+    typeof BART | 
+    typeof CSO | 
+    typeof Dispatch | 
+    typeof Emergency | 
+    typeof Na | 
+    typeof PO | 
+    typeof Team | 
+    typeof TeamMember | 
+    typeof TrainingSkill | 
+    typeof User | 
+    typeof UserSkill
+> | 'all' 
 
 export type AppAbility = PureAbility<[Action, Subjects]>
 

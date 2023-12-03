@@ -3,39 +3,46 @@ import { DispatchService } from './dispatch.service';
 import { CreateDispatchDto } from './dto/create-dispatch.dto';
 import { UpdateDispatchDto } from './dto/update-dispatch.dto';
 import { Dispatch } from '@prisma/client';
-import { JwtAuthGuard } from '../auth/guards';
+import { AbilitiesGuard, JwtAuthGuard } from '../auth/guards';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CreateDispatchAbility, ReadDispatchAbility, UpdateDispatchAbility, DeleteDispatchAbility } from './abilities';
+import { CheckAbilities } from 'src/auth/abilities/ability.decorator';
+
 @ApiBearerAuth() 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AbilitiesGuard)
 @Controller('/api/v1/dispatch')
 @ApiTags('dispatch')
 export class DispatchController {
 	constructor(private readonly dispatchService: DispatchService) {}
 
 	@Delete('/truncate')
+	@CheckAbilities( new DeleteDispatchAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async truncate(): Promise<void> {
 		await this.dispatchService.truncate();
 	}
 
-  @Post()
-  @UsePipes(new ValidationPipe())
-  async create(@Body() createDispatchDtos: CreateDispatchDto[] | CreateDispatchDto): Promise<Dispatch[]> {
-	console.log('create()')
-    if (!Array.isArray(createDispatchDtos)) {
-      throw new BadRequestException('Invalid input. Expected an array.');
-    }
+  	@Post()
+	@CheckAbilities( new CreateDispatchAbility() )
+	@UsePipes(new ValidationPipe())
+	async create(@Body() createDispatchDtos: CreateDispatchDto[] | CreateDispatchDto): Promise<Dispatch[]> {
+		console.log('create()')
+		if (!Array.isArray(createDispatchDtos)) {
+		throw new BadRequestException('Invalid input. Expected an array.');
+		}
 
-    return await this.dispatchService.create(createDispatchDtos);
-  }
+		return await this.dispatchService.create(createDispatchDtos);
+	}
 
 	@Get()
+	@CheckAbilities( new ReadDispatchAbility() )
 	async findAll(): Promise<Dispatch[]> {
 		console.log('findAll()')
 		return await this.dispatchService.findAll();
 	}
 
 	@Get(':id')
+	@CheckAbilities( new ReadDispatchAbility() )
 	async findOne(@Param('id') id: string): Promise<Dispatch> {
 		console.log('findOne()', id)
 		const dispatch = await this.dispatchService.findOne(id);
@@ -43,6 +50,7 @@ export class DispatchController {
 	}
 
 	@Patch(':id')
+	@CheckAbilities( new UpdateDispatchAbility() )
 	@UsePipes(new ValidationPipe())
 	async update(
 		@Param('id') id: string,
@@ -54,6 +62,7 @@ export class DispatchController {
 	}
 
 	@Patch(':id/update-time/:fieldName')
+	@CheckAbilities( new UpdateDispatchAbility() )
 	async updateTimeField(
 	  @Param('id', new ParseUUIDPipe()) dispatchId: string,
 	  @Param('fieldName') fieldName: string,
@@ -65,6 +74,7 @@ export class DispatchController {
 	}
 
 	@Delete(':id')
+	@CheckAbilities( new DeleteDispatchAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async remove(@Param('id') id: string): Promise<void> {
 		console.log('remove()', id)
