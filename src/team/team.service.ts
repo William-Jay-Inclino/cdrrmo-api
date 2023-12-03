@@ -4,6 +4,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from '@prisma/client';
 import { TeamMemberDto } from './dto';
+import { TeamStatusEnum } from './entities';
 
 @Injectable()
 export class TeamService {
@@ -29,6 +30,9 @@ export class TeamService {
 
   async findAll() {
     return await this.prisma.team.findMany({
+      where: {
+        is_deleted: false,
+      },
       include: {
         team_leader: {
           select: {
@@ -42,9 +46,12 @@ export class TeamService {
     });
   }
 
-  async findAllActive(status: number) {
+  async findAllActive() {
     return await this.prisma.team.findMany({
-      where: {status},
+      where: {
+        status: TeamStatusEnum.Active,
+        is_deleted: false,
+      },
       include: {
         team_leader: {
           select: {
@@ -67,6 +74,11 @@ export class TeamService {
             id: true,
             first_name: true,
             last_name: true,
+            type: true,
+            Bart: {select: {name: true}},
+            Cso: {select: {name: true}},
+            Po: {select: {name: true}},
+            Na: {select: {name: true}},
             skills: {
               include: {
                 TrainingSkill: true
@@ -126,13 +138,26 @@ export class TeamService {
   
   async remove(id: string) {
     const existingTeam = await this.findOne(id);
-  
-    await this.prisma.team.delete({
-      where: { id },
+
+    if (!existingTeam) {
+        // Handle the case where the team with the given id doesn't exist
+        return false;
+    }
+
+    // Should unable to delete if status is active
+    if (existingTeam.status === TeamStatusEnum.Active) {
+        return false;
+    }
+
+    await this.prisma.team.update({
+        where: { id },
+        data: {
+            is_deleted: true,
+        },
     });
-  
+
     return true;
-  }
+}
 
   async truncate() {
     return await this.prisma.team.deleteMany({});

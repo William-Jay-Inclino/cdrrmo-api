@@ -1,1 +1,5 @@
-export class Bart {}
+export class BART {
+    id: string
+    name: string
+    description: string
+}

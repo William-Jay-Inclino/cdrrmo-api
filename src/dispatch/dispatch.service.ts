@@ -64,7 +64,7 @@ export class DispatchService {
   
   async findAll(): Promise<Dispatch[]> {
     const today = new Date();
-    today.setUTCHours(0, 0, 0, 0); // Set the time to the beginning of the day
+    today.setUTCHours(8, 0, 0, 0); // Set the time to 12:00 AM in Philippine time
   
     return await this.prisma.dispatch.findMany({
       where: {
@@ -95,6 +95,11 @@ export class DispatchService {
                 id: true,
                 first_name: true,
                 last_name: true,
+                type: true,
+                Bart: {select: {name: true}},
+                Cso: {select: {name: true}},
+                Po: {select: {name: true}},
+                Na: {select: {name: true}},
                 skills: {
                   include: {
                     TrainingSkill: true,
@@ -242,7 +247,7 @@ export class DispatchService {
     return await this.prisma.dispatch.deleteMany({});
   }
 
-  async updateTimeField(dispatchId: string, fieldName: string, updateData: Record<string, any> = {}): Promise<Dispatch> {
+  async updateTimeField(dispatchId: string, fieldName: string, updateDispatchDto: UpdateDispatchDto): Promise<Dispatch> {
     const allowedFields = [
       'time_proceeding_scene',
       'time_arrival_scene',
@@ -256,10 +261,17 @@ export class DispatchService {
       throw new Error(`Field ${fieldName} is not allowed for time update.`);
     }
 
+    const updateData: Record<string, any> = {}
+
     updateData[fieldName] = new Date(); // Set to the current date and time
 
     // Check if the dispatch with the given ID exists
     const existingDispatch = await this.findOne(dispatchId);
+
+    if(existingDispatch.dispatcher_id !== updateDispatchDto.dispatcher_id){
+      throw new Error(`Dispatcher not allowed to set time`);
+    }
+
       // Update status based on the fieldName
     switch (fieldName) {
       case 'time_proceeding_scene':

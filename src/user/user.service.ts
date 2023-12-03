@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
-import { UserLevelEnum } from 'src/shared/entities';
+import { SearchFieldEnum, UserLevelEnum, UserStatusEnum } from './entities';
 
 @Injectable()
 export class UserService {
@@ -188,51 +188,90 @@ export class UserService {
 			}
 		}
 	}
-
-	async findAll() {
-		console.log('findAll()')
-		const users = await this.prisma.user.findMany({
-			select: {
-				id: true,
-				user_name: true,
-				user_level: true,
-				last_name: true,
-				first_name: true,
-				gender: true,
-				address: true,
-				birth_date: true,
-				contact_no: true,
-				blood_type: true,
-				status: true,
-				dispatch_status: true,
-				type: true,
-				bart_id: true,
-				cso_id: true,
-				po_id: true,
-				na_id: true,
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
-				emergencyContacts: true,
-				skills: {
-					include: {
-						TrainingSkill: true,
-					}
-				}     
+	
+	async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
+		console.log('findAll()');
+	  
+		const skip = (page - 1) * pageSize;
+	  
+		let whereCondition: Record<string, any> = {};
+	  
+		if (searchField && searchValue !== undefined) {
+		  if (searchField === 'user_id') {
+			const numericSearchValue = parseInt(searchValue as string, 10);
+			if (!isNaN(numericSearchValue)) {
+				whereCondition = { user_id: numericSearchValue };
+			} else {
+				throw new Error('Invalid user_id. Must be a number.');
 			}
+		  } else if (searchField === 'first_name' || searchField === 'last_name') {
+			whereCondition = {
+			  [searchField]: {
+				contains: searchValue,
+				mode: 'insensitive',
+			  },
+			};
+		  }
+		}
+	  
+		const users = await this.prisma.user.findMany({
+		  select: {
+			id: true,
+			user_id: true,
+			user_name: true,
+			user_level: true,
+			last_name: true,
+			first_name: true,
+			gender: true,
+			address: true,
+			birth_date: true,
+			contact_no: true,
+			blood_type: true,
+			status: true,
+			dispatch_status: true,
+			type: true,
+			bart_id: true,
+			cso_id: true,
+			po_id: true,
+			na_id: true,
+			Bart: true,
+			Cso: true,
+			Po: true,
+			Na: true,
+			teamMembers: true,
+			teamLeader: true,
+			emergencyContacts: true,
+			skills: {
+			  include: {
+				TrainingSkill: true,
+			  },
+			},
+		  },
+		  orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
+		  skip,
+		  take: pageSize,
+		  where: whereCondition,
 		});
-
-		return users
+	  
+		const totalUsers = await this.prisma.user.count({
+			where: whereCondition,
+		});
+	  
+		return {
+		  users,
+		  totalUsers,
+		  currentPage: page,
+		  totalPages: Math.ceil(totalUsers / pageSize),
+		};
 	}
 
 	async findOne(id: string) {
+		console.log('findOne', id)
 		const user = await this.prisma.user.findUnique({
 			where: { id },
 			select: {
 				id: true,
+				user_id: true,
 				user_name: true,
 				user_level: true,
 				last_name: true,
@@ -271,18 +310,30 @@ export class UserService {
 		return user
 	}
 
+	async findByUserName(user_name: string) {
+		console.log('UserService: findByUserName()', user_name)
+		const user = await this.prisma.user.findUnique({
+			where: { user_name },
+		});
+	
+		if (!user) {
+		  throw new NotFoundException('User not found.');
+		}
+
+		return user
+	}
+
 	// User type (team leader) that has no assigned team
 	async findOrphanLeaders() {
 		const users = await this.prisma.user.findMany({
 			where: {
-				user_level: UserLevelEnum.TEAM_LEADER,
+				user_level: UserLevelEnum.Team_Leader,
 				teamLeader: null, // user is not yet assigned to a team
-				// teamMembers: { 
-				// 	none: {}
-				// }
+				status: UserStatusEnum.Active
 			},	
 			select: {
 				id: true,
+				user_id: true,
 				first_name: true,
 				last_name: true,
 				Bart: true, 
@@ -297,7 +348,11 @@ export class UserService {
 						TrainingSkill: true,
 					}
 				}     
-			}
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
 		});
 
 		return users
@@ -308,12 +363,14 @@ export class UserService {
 		const users = await this.prisma.user.findMany({
 			where: {
 				teamLeader: null, // user is not a team leader
+				status: UserStatusEnum.Active,
 				teamMembers: { // user is not a team member
 					none: {}
 				}
 			},	
 			select: {
 				id: true,
+				user_id: true,
 				first_name: true,
 				last_name: true,
 				Bart: true, 
@@ -328,19 +385,34 @@ export class UserService {
 						TrainingSkill: true,
 					}
 				}     
-			}
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
 		});
 
-		const usersWithoutPassword = users.map(user => {
+		return users
+	}
 
-			return {
-				...user,
-			}
-		});
+	async findDispatchers(){
+		const users = await this.prisma.user.findMany({
+			where: {
+				user_level: UserLevelEnum.Dispatcher,
+				status: UserStatusEnum.Active
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
+		})
 
-		console.log('usersWithoutPassword', usersWithoutPassword)
-
-		return usersWithoutPassword
+		return users
 	}
 
 	async isUsernameTaken(user_name: string): Promise<boolean> {
