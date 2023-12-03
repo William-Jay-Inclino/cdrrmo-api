@@ -64,6 +64,7 @@ export class DispatchService {
   // this will get all dispatched records today or records that are not completed
   
   async findAll(payload: {currentUser: User}): Promise<Dispatch[]> {
+    console.log('currentUser', payload.currentUser)
     const today = new Date();
     today.setUTCHours(8, 0, 0, 0);
 
@@ -135,7 +136,7 @@ export class DispatchService {
     }
 
     // If not admin, add additional filtering for dispatcher_id
-    query.where['dispatcher_id'] = payload.currentUser.user_id.toString();
+    query.where['dispatcher_id'] = payload.currentUser.id;
 
     return await this.prisma.dispatch.findMany(query);
   }
@@ -162,11 +163,16 @@ export class DispatchService {
                 id: true,
                 first_name: true,
                 last_name: true,
+                type: true,
+                Bart: { select: { name: true } },
+                Cso: { select: { name: true } },
+                Po: { select: { name: true } },
+                Na: { select: { name: true } },
                 skills: {
                   include: {
-                    TrainingSkill: true
-                  }
-                }
+                    TrainingSkill: true,
+                  },
+                },
               },
             },
             teamMembers: { // include team members
