@@ -456,7 +456,7 @@ export class UserService {
 		return `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randomSuffix}`;
 	}
 
-	private hashPassword(password: string) {
+	hashPassword(password: string) {
 		// Hash the password using bcrypt
 		const saltRounds = 10; // You can adjust the number of salt rounds
 		return bcrypt.hash(password, saltRounds);

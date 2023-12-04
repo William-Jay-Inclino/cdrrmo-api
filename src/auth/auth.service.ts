@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateAccountDto } from './dto/update-account.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly userService: UserService,
         private readonly jwtService: JwtService,
+        private readonly prisma: PrismaService,
     ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -47,5 +50,25 @@ export class AuthService {
     };
   }
 
+  async updateAccount(id: string, updateAccountDto: UpdateAccountDto): Promise<boolean>{
+    console.log('updateAccount()', updateAccountDto)
+    
+    try {
+      const existingUser = await this.userService.findOne(id)
+      const password_hash = await this.userService.hashPassword(updateAccountDto.password) 
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: {
+          password_hash,
+        },
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating password:', error);
+      return false;
+    }
+
+  }
 
 }
