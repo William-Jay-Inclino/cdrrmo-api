@@ -6,6 +6,7 @@ import { CheckAbilities } from './abilities/ability.decorator';
 import { UpdateUserAbility } from 'src/user/abilities';
 import { UpdateAccountDto, LoginDto } from './dto';
 import { UserService } from 'src/user/user.service';
+import { User } from '@prisma/client';
 
 @Controller('/api/v1/auth')
 @ApiTags('auth')
@@ -21,11 +22,19 @@ export class AuthController {
     description: 'Login credentials',
     type: LoginDto, 
   })
-
   async login(@Request() req) {
     console.log('AuthController: login()')
     return this.authService.login(req.user);
   }
+
+  @Post('/create-admin')
+  @ApiBody({
+    description: 'Create Admin',
+    type: LoginDto, 
+  })
+	async create(@Body() loginDto: LoginDto): Promise<User> {
+		return await this.authService.createAdmin(loginDto.username, loginDto.password)
+	}
 
   @Patch('/update-password/:id')
   @UseGuards(JwtAuthGuard)

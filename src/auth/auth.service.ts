@@ -4,6 +4,8 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from 'src/user/entities';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -70,5 +72,38 @@ export class AuthService {
     }
 
   }
+
+
+  async createAdmin(username: string, password: string): Promise<User> {
+    try {
+      const passwordHash = await this.userService.hashPassword(password);
+
+      const data = {
+        user_name: username,
+        user_level: UserLevelEnum.Admin,
+        password_hash: passwordHash,
+        last_name: 'admin',
+        first_name: 'admin',
+        gender: GenderEnum.Male,
+        address: 'Ormoc City',
+        birth_date: new Date('1990-01-01T00:00:00.000Z'),
+        contact_no: '09106024371',
+        blood_type: 'A+',
+        status: UserStatusEnum.Active,
+        type: UserTypeEnum.LGU_Regular,
+      }
+
+      // Create an admin user
+      const createdAdmin = await this.prisma.user.create({data});
+
+      console.log('Admin created:', createdAdmin);
+
+      return createdAdmin
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      throw new Error('Failed to create admin');
+    }
+  }
+
 
 }
