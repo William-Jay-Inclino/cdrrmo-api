@@ -14,6 +14,7 @@ import { SeederModule } from './prisma/seeder/seeder.module';
 import { TeamModule } from './team/team.module';
 import { DispatchModule } from './dispatch/dispatch.module';
 import { AuthModule } from './auth/auth.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AuthModule } from './auth/auth.module';
     TeamModule,
     DispatchModule,
     AuthModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [
