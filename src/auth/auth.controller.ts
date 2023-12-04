@@ -4,7 +4,7 @@ import { LocalAuthGuard, JwtAuthGuard } from './guards';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { CheckAbilities } from './abilities/ability.decorator';
 import { UpdateUserAbility } from 'src/user/abilities';
-import { UpdateAccountDto, LoginDto } from './dto';
+import { UpdateAccountDto, LoginDto, RenewPwDto } from './dto';
 import { UserService } from 'src/user/user.service';
 import { User } from '@prisma/client';
 
@@ -40,7 +40,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
 	@CheckAbilities( new UpdateUserAbility() )
 	@UsePipes(new ValidationPipe())
-	async update(
+	async updateAccount(
 		@Param('id') id: string,
 		@Body() updateAccountDto: UpdateAccountDto,
 		@Req() req
@@ -52,6 +52,24 @@ export class AuthController {
 		}
 
 		return await this.authService.updateAccount(id, updateAccountDto);
+	}
+
+  @Patch('/renew-password/:id')
+  @UseGuards(JwtAuthGuard)
+	@CheckAbilities( new UpdateUserAbility() )
+	@UsePipes(new ValidationPipe())
+	async renewPassword(
+		@Param('id') id: string,
+		@Body() renewPwDto: RenewPwDto,
+		@Req() req
+	) {
+
+		// only admin and user (own profile) can update 
+		if(!this.userService.canManage({currentUser: req.user, id})){
+			throw new ForbiddenException()
+		}
+
+		return await this.authService.renewPassword(id, renewPwDto);
 	}
 
 }

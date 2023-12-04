@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { UpdateAccountDto, RenewPwDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from 'src/user/entities';
 import { User } from '@prisma/client';
@@ -73,6 +73,39 @@ export class AuthService {
 
   }
 
+	async renewPassword(id: string, renewPwDto: RenewPwDto): Promise<boolean> {
+		console.log('renewPassword()', id, renewPwDto)
+		const user = await this.prisma.user.findUnique({
+				select: {
+						password_hash: true
+				},
+				where: { id }
+		});
+
+		if (!user) {
+				throw new NotFoundException(`User with ID ${id} not found`);
+		}
+
+		if (!(await bcrypt.compare(renewPwDto.currentPassword, user.password_hash))) {
+				throw new BadRequestException('Current password is incorrect');
+		}
+
+		const password_hash = await this.userService.hashPassword(renewPwDto.newPassword);
+
+		const updatedUser = await this.prisma.user.update({
+				where: { id },
+				data: {
+						password_hash,
+				},
+		});
+
+		if (updatedUser) {
+				return true
+		} else {
+			throw new BadRequestException('Password renewal failed');
+		}
+    
+}
 
   async createAdmin(username: string, password: string): Promise<User> {
     try {
