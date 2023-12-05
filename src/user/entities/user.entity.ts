@@ -14,7 +14,7 @@ export class User {
     user_id: number
     user_name: string 
     user_level: UserLevelEnum
-    password: string
+    password?: string
     last_name: string 
     first_name: string
     gender: GenderEnum 

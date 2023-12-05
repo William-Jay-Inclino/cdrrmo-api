@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
-import { SearchFieldEnum, UserLevelEnum, UserStatusEnum } from './entities';
+import { SearchFieldEnum, User, UserLevelEnum, UserStatusEnum } from './entities';
 
 @Injectable()
 export class UserService {
@@ -15,67 +15,65 @@ export class UserService {
 	// password is hash using bcrypt
 	async create(createUserDto: CreateUserDto) {
 		try {
-
 			const { skills, emergencyContacts, ...userData } = createUserDto;
-
-			// validate if skills exist in training_skills table
-			const skillIds = skills.map((skill) => skill.training_skill_id);
-			const skillsExist = await this.validateTrainingSkillsExist(skillIds)
-
-			if(!skillsExist){
-				throw new NotFoundException('One or more training_skill_id values do not exist.');
+	
+			// validate if skills exist in training_skills table if provided
+			if (skills && skills.length > 0) {
+				const skillIds = skills.map((skill) => skill.training_skill_id);
+				const skillsExist = await this.validateTrainingSkillsExist(skillIds);
+	
+				if (!skillsExist) {
+					throw new NotFoundException('One or more training_skill_id values do not exist.');
+				}
 			}
-
-			delete userData.password // delete password prop since it's not included in user schema
-
+	
+			delete userData.password; // delete password prop since it's not included in user schema
+	
 			// use transaction so that if 1 transaction fails it will rollback
-
 			const result = await this.prisma.$transaction(async (prismaClient) => {
-
-				// Transform emergencyContacts to the Prisma nested input structure
-				const emergencyContactsInput: Prisma.EmergencyContactCreateNestedManyWithoutUserInput = {
-					create: emergencyContacts.map((emergencyContact: EmergencyContactDto) => {
-					  return {
-						name: emergencyContact.name,
-						relationship: emergencyContact.relationship,
-						mobile: emergencyContact.mobile,
-					  };
-					}),
-				};
-				
+				// Transform emergencyContacts to the Prisma nested input structure if provided
+				const emergencyContactsInput: Prisma.EmergencyContactCreateNestedManyWithoutUserInput = emergencyContacts
+					? {
+						  create: emergencyContacts.map((emergencyContact: EmergencyContactDto) => {
+							  return {
+								  name: emergencyContact.name,
+								  relationship: emergencyContact.relationship,
+								  mobile: emergencyContact.mobile,
+							  };
+						  }),
+					  }
+					: undefined;
+	
 				const data: Prisma.UserCreateInput = {
-				...userData,
-				password_hash: await this.hashPassword(createUserDto.password),
-				emergencyContacts: emergencyContactsInput,
+					...userData,
+					password_hash: await this.hashPassword(createUserDto.password),
+					emergencyContacts: emergencyContactsInput,
 				};
-
-				console.log('data', data)
-		
+	
+				console.log('data', data);
+	
 				const user = await prismaClient.user.create({ data });
-				
-				// save userSkills to user_skills table
+	
+				// save userSkills to user_skills table if skills are provided
 				if (skills && skills.length > 0) {
-
 					const userSkills: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
 						return {
 							user_id: user.id,
 							training_skill_id: skill.training_skill_id,
 						};
 					});
-			
+	
 					await prismaClient.userSkill.createMany({ data: userSkills });
 				}
-				
-				
+	
 				return user;
 			});
-
-			const addedUser = await this.findOne(result.id)
-			return addedUser
-
+	
+			const addedUser = await this.findOne(result.id);
+			return addedUser;
 		} catch (error) {
 			console.error('Error:', error);
-		
+	
 			if (error.code === 'P2002') {
 				throw new ConflictException('User with the same data already exists.');
 			} else {
@@ -83,10 +81,11 @@ export class UserService {
 			}
 		}
 	}
+	
 
 	// I use the remove and add (Replace) approach for updating the user skills 
 	async update(userId: string, updateUserDto: UpdateUserDto) {
-		console.log('update()', updateUserDto)
+		console.log('update()', updateUserDto);
 		try {
 			const { skills, emergencyContacts, ...updatedUserData } = updateUserDto;
 	
@@ -101,7 +100,7 @@ export class UserService {
 				throw new NotFoundException(`User with ID ${userId} not found.`);
 			}
 	
-			// Validate if skills exist in the training_skills table
+			// Validate if skills exist in the training_skills table if provided
 			if (skills && skills.length > 0) {
 				const skillIds = skills.map((skill) => skill.training_skill_id);
 				const skillsExist = await this.validateTrainingSkillsExist(skillIds);
@@ -118,15 +117,15 @@ export class UserService {
 					...updatedUserData,
 				};
 	
-				// Remove all existing skills for the user
-				await prismaClient.userSkill.deleteMany({
-					where: {
-						user_id: userId,
-					},
-				});
-	
-				// Add the new userSkills to the user_skills table
+				// Remove all existing skills for the user if skills are provided
 				if (skills && skills.length > 0) {
+					await prismaClient.userSkill.deleteMany({
+						where: {
+							user_id: userId,
+						},
+					});
+	
+					// Add the new userSkills to the user_skills table
 					const userSkillsToCreate: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
 						return {
 							user_id: userId,
@@ -136,27 +135,27 @@ export class UserService {
 	
 					await prismaClient.userSkill.createMany({ data: userSkillsToCreate });
 				}
-
-				// Remove all existing emergency contacts for the user
-				await prismaClient.emergencyContact.deleteMany({
-					where: {
-					  user_id: userId,
-					},
-				});
-
-				// Add the new emergencyContacts to the emergency_contacts table
+	
+				// Remove all existing emergency contacts for the user if emergencyContacts are provided
 				if (emergencyContacts && emergencyContacts.length > 0) {
+					await prismaClient.emergencyContact.deleteMany({
+						where: {
+							user_id: userId,
+						},
+					});
+	
+					// Add the new emergencyContacts to the emergency_contacts table
 					const emergencyContactsToCreate: Prisma.EmergencyContactCreateManyInput[] = emergencyContacts.map(
-					  (emergencyContact: EmergencyContactDto) => {
-						return {
-						  user_id: userId,
-						  name: emergencyContact.name,
-						  relationship: emergencyContact.relationship,
-						  mobile: emergencyContact.mobile,
-						};
-					  }
+						(emergencyContact: EmergencyContactDto) => {
+							return {
+								user_id: userId,
+								name: emergencyContact.name,
+								relationship: emergencyContact.relationship,
+								mobile: emergencyContact.mobile,
+							};
+						}
 					);
-			
+	
 					await prismaClient.emergencyContact.createMany({ data: emergencyContactsToCreate });
 				}
 	
@@ -172,12 +171,9 @@ export class UserService {
 			});
 	
 			// Transaction was successful
-			// return result;
-
-			const updatedUser = await this.findOne(result.id)
-
-			return updatedUser
-
+			const updatedUser = await this.findOne(result.id);
+	
+			return updatedUser;
 		} catch (error) {
 			console.error('Error:', error);
 	
@@ -188,6 +184,7 @@ export class UserService {
 			}
 		}
 	}
+	
 	
 	async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
 		console.log('findAll()');
@@ -437,12 +434,29 @@ export class UserService {
 		return await this.prisma.user.deleteMany({});
 	}
 
+	canManage(payload: {currentUser: User, id?: string}): boolean{
+
+		// this is find all endpoint since no id
+		if(!payload.id && payload.currentUser.user_level !== UserLevelEnum.Admin){
+			return false 
+		}
+
+		// this is read one / update endpoint 
+		if(payload.currentUser.user_level !== UserLevelEnum.Admin){
+			if(payload.currentUser.id !== payload.id){
+				return false 
+			}
+		}
+
+		return true
+	}
+
 	private generateUniqueUserName(firstName: string, lastName: string): string {
 		const randomSuffix = Math.floor(Math.random() * 10000); // Generate a random number
 		return `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randomSuffix}`;
 	}
 
-	private hashPassword(password: string) {
+	hashPassword(password: string) {
 		// Hash the password using bcrypt
 		const saltRounds = 10; // You can adjust the number of salt rounds
 		return bcrypt.hash(password, saltRounds);

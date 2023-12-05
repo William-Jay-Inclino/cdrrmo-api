@@ -3,17 +3,16 @@
 import { AbilityBuilder, AbilityClass, ExtractSubjectType, PureAbility } from "@casl/ability";
 import { Injectable } from "@nestjs/common";
 import { Action, AppAbility, Subjects } from "../entities";
-import { User, UserLevelEnum, UserSkill } from "src/user/entities";
+import { User, UserLevelEnum } from "src/user/entities";
 import { Dispatch } from "src/dispatch/entities";
+import { Team } from "src/team/entities";
 import { Emergency } from "src/emergency/entities";
-import { Team, TeamMember } from "src/team/entities";
-import { TrainingSkill } from "src/training-skill/entities";
 
 @Injectable()
 export class AbilityFactory{
     defineAbility(user: User){
 
-        console.log('user', user)
+        console.log('AbilityFactory: defineAbility')
 
         const { can, cannot, build } = new AbilityBuilder(PureAbility as AbilityClass<AppAbility>)
 
@@ -22,12 +21,12 @@ export class AbilityFactory{
             can(Action.Manage, 'all')
         } 
         
-        // dispatcher can only manage dispatch module but allows to read other modules related in dispatch module;
-        // dispatcher can also update own profile
+        // dispatcher can only manage dispatch module
+        // allow dispatcher to read and update user; There is a validation in controller wherein only dispatcher can read/update own data
         else if (user.user_level === UserLevelEnum.Dispatcher) {
             can(Action.Manage, Dispatch)
-            can(Action.Read, [Emergency, Team, TeamMember, TrainingSkill, User, UserSkill])
-            can(Action.Update, User, { id: user.id }); // Allow updating own profile
+            can(Action.Read, [Team, User, Emergency])
+            can(Action.Update, User)
         } 
         
         // TODO: Set permissions for other user levels (Team lead & Field operator)

@@ -92,13 +92,15 @@ export class CreateUserDto {
     na_id?: string;
 
     @ApiProperty()
+    @IsOptional()
     @IsArray()
     @Validate(IsValidUserSkillDtoArray)
-    skills: UserSkillDto[];
+    skills?: UserSkillDto[];
 
     @ApiProperty()
+    @IsOptional()
     @IsArray()
     @Validate(IsValidEmergencyContactDtoArray)
-    emergencyContacts: EmergencyContactDto[];
+    emergencyContacts?: EmergencyContactDto[];
 
 }
