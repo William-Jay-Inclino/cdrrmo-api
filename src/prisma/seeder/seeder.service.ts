@@ -3,7 +3,8 @@ import { PrismaService } from '../prisma.service';
 import * as mockData from './mock-data';
 import { Bart, Cso, Emergency, Na, Po, SkillCertificate, Team, TeamMember, TrainingSkill, User, UserSkill } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { GenderEnum, TeamStatusEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from '../../shared/entities';
+import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from 'src/user/entities';
+import { TeamStatusEnum } from 'src/team/entities';
 @Injectable()
 export class SeederService {
 
@@ -35,7 +36,7 @@ export class SeederService {
         this.nas = await this.seedNaTbl()
         this.users = await this.seedUserTbl()
         this.teams = await this.seedTeamTbl()
-        this.teamMembers = await this.seedTeamMemberTbl()
+        // this.teamMembers = await this.seedTeamMemberTbl()
         this.userSkills = await this.seedUserSkillTbl()
         this.skillCertificates = await this.seedSkillCertificateTbl()
     }
@@ -202,33 +203,33 @@ export class SeederService {
         const seedData: User[] = []
 
         const userLevelValues = [
-            UserLevelEnum.ADMIN,
-            UserLevelEnum.DISPATCHER,
-            UserLevelEnum.TEAM_LEADER,
-            UserLevelEnum.FIELD_OPERATOR,
+            UserLevelEnum.Admin,
+            UserLevelEnum.Dispatcher,
+            UserLevelEnum.Team_Leader,
+            UserLevelEnum.Field_Operator,
         ]
 
         const genderValues = [
-            GenderEnum.FEMALE,
-            GenderEnum.MALE,
+            GenderEnum.Female,
+            GenderEnum.Male,
         ]
 
         const bloodTypeValues = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
         const userStatusValues = [
-            UserStatusEnum.ACTIVE,
-            UserStatusEnum.INACTIVE,
+            UserStatusEnum.Active,
+            UserStatusEnum.Inactive,
         ]
 
         const userTypeValues = [
-            UserTypeEnum.LGU_CASUAL,
-            UserTypeEnum.LGU_JOB_ORDER,
-            UserTypeEnum.LGU_REGULAR,
+            UserTypeEnum.LGU_Casual,
+            UserTypeEnum.LGU_Job_Order,
+            UserTypeEnum.LGU_Regular,
             UserTypeEnum.ACDV_BART,
             UserTypeEnum.ACDV_CSO,
             UserTypeEnum.ACDV_PO,
             UserTypeEnum.ACDV_INDIVIDUAL,
-            UserTypeEnum.NA,
+            UserTypeEnum.National_Agency,
         ]
 
         let csos = this.csos
@@ -284,7 +285,7 @@ export class SeederService {
                 data.po_id = pos[Math.floor(Math.random() * pos.length)].id
             }
 
-            if(data.type === UserTypeEnum.NA){
+            if(data.type === UserTypeEnum.National_Agency){
                 data.na_id = nas[Math.floor(Math.random() * nas.length)].id
             }
 
@@ -327,7 +328,7 @@ export class SeederService {
             const data = {} as Team 
             data.id = faker.string.uuid()
             data.name = i 
-            data.status = TeamStatusEnum.ACTIVE
+            data.status = TeamStatusEnum.Active
             
             data.team_leader_id = users[Math.floor(Math.random() * users.length)].id
 
@@ -347,80 +348,80 @@ export class SeederService {
 
     } 
 
-    async seedTeamMemberTbl(): Promise<TeamMember[]>{
-        console.log('seeding team member table...')
+    // async seedTeamMemberTbl(): Promise<TeamMember[]>{
+    //     console.log('seeding team member table...')
 
-        await this.prisma.teamMember.deleteMany({})
+    //     await this.prisma.teamMember.deleteMany({})
 
-        const seedData: TeamMember[] = []
+    //     const seedData: TeamMember[] = []
 
-        let users = this.users 
+    //     let users = this.users 
 
-        if(users.length === 0){
-            users = await this.seedUserTbl()
-        }
+    //     if(users.length === 0){
+    //         users = await this.seedUserTbl()
+    //     }
 
 
-        for(let user of users){
+    //     for(let user of users){
 
-            const userIsATeamLeader = await this.prisma.team.findUnique({
-                where: {team_leader_id: user.id},
-                include: {
-                    team_leader: true,
-                    teamMembers: true,
-                }
-            })
+    //         const userIsATeamLeader = await this.prisma.team.findUnique({
+    //             where: {team_leader_id: user.id},
+    //             include: {
+    //                 team_leader: true,
+    //                 teamMembers: true,
+    //             }
+    //         })
 
-            if(userIsATeamLeader){
-                console.log(userIsATeamLeader)
-                console.log('user is a team leader. Not added as a member')
-                continue 
-            }
+    //         if(userIsATeamLeader){
+    //             console.log(userIsATeamLeader)
+    //             console.log('user is a team leader. Not added as a member')
+    //             continue 
+    //         }
 
-            const userHasTeam = await this.prisma.teamMember.findUnique(
-                {
-                    where: {member_id: user.id},
-                    include: {
-                        team: true,
-                        member: true,
-                    }
-                }
-            )
+    //         const userHasTeam = await this.prisma.teamMember.findUnique(
+    //             {
+    //                 where: {member_id: user.id},
+    //                 include: {
+    //                     team: true,
+    //                     member: true,
+    //                 }
+    //             }
+    //         )
 
-            if(userHasTeam){
-                console.log('user has a team. Not added as a member')
-                console.log(userHasTeam)
-                continue
-            }
+    //         if(userHasTeam){
+    //             console.log('user has a team. Not added as a member')
+    //             console.log(userHasTeam)
+    //             continue
+    //         }
 
-            const data = {} as TeamMember
+    //         const data = {} as TeamMember
 
-            data.id = faker.string.uuid()
-            data.member_id = user.id
+    //         data.id = faker.string.uuid()
+    //         data.member_id = user.id
             
-            let teams = this.teams 
+    //         let teams = this.teams 
 
-            if(teams.length === 0){
-                teams = await this.seedTeamTbl()
-            }
+    //         if(teams.length === 0){
+    //             teams = await this.seedTeamTbl()
+    //         }
 
-            data.team_id = teams[Math.floor(Math.random() * teams.length)].id
-            data.created_at = new Date()
-            data.updated_at = new Date()
+    //         data.team_id = teams[Math.floor(Math.random() * teams.length)].id
+    //         data.created_at = new Date()
+    //         data.updated_at = new Date()
 
-            console.log(data)
+    //         console.log(data)
 
-            console.log('User is added as member')
+    //         console.log('User is added as member')
 
-            seedData.push(data)
-        }
+    //         seedData.push(data)
+    //     }
 
-        await this.prisma.teamMember.createMany({
-            data: seedData,
-        });
+    //     await this.prisma.teamMember.createMany({
+    //         data: seedData,
+    //     });
 
-        return seedData
-    } 
+    //     return seedData
+    // } 
 
     async seedUserSkillTbl(countSkill = 2): Promise<UserSkill[]>{
         console.log('seeding user skill table...')

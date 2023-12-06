@@ -4,6 +4,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from '@prisma/client';
 import { TeamMemberDto } from './dto';
+import { TeamStatusEnum } from './entities';
 
 @Injectable()
 export class TeamService {
@@ -11,9 +12,13 @@ export class TeamService {
 
   async create(createTeamDto: CreateTeamDto) {
     try {
-      return await this.prisma.team.create({
+      const created = await this.prisma.team.create({
         data: { ...createTeamDto },
       });
+
+      const team = await this.findOne(created.id)
+      return team
+
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException('Team with the same data already exists.');
@@ -25,8 +30,36 @@ export class TeamService {
 
   async findAll() {
     return await this.prisma.team.findMany({
+      where: {
+        is_deleted: false,
+      },
       include: {
-        team_leader: true,
+        team_leader: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          }
+        },
+        teamMembers: true
+      }
+    });
+  }
+
+  async findAllActive() {
+    return await this.prisma.team.findMany({
+      where: {
+        status: TeamStatusEnum.Active,
+        is_deleted: false,
+      },
+      include: {
+        team_leader: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+          }
+        },
         teamMembers: true
       }
     });
@@ -36,8 +69,39 @@ export class TeamService {
     const team = await this.prisma.team.findUnique({
       where: { id },
       include: {
-        team_leader: true,
-        teamMembers: true
+        team_leader: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            type: true,
+            Bart: {select: {name: true}},
+            Cso: {select: {name: true}},
+            Po: {select: {name: true}},
+            Na: {select: {name: true}},
+            skills: {
+              include: {
+                TrainingSkill: true
+              }
+            }
+          }
+        },
+        teamMembers: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                skills: {
+                  include: {
+                    TrainingSkill: true
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     });
 
@@ -67,29 +131,48 @@ export class TeamService {
       where: { id },
       data: { ...updateTeamDto },
     });
-  
-    return updatedTeam;
+
+    const team = await this.findOne(updatedTeam.id)
+    return team
   }
   
   async remove(id: string) {
     const existingTeam = await this.findOne(id);
-  
-    await this.prisma.team.delete({
-      where: { id },
+
+    if (!existingTeam) {
+        // Handle the case where the team with the given id doesn't exist
+        return false;
+    }
+
+    // Should unable to delete if status is active
+    if (existingTeam.status === TeamStatusEnum.Active) {
+        return false;
+    }
+
+    await this.prisma.team.update({
+        where: { id },
+        data: {
+            is_deleted: true,
+        },
     });
-  
+
     return true;
-  }
+}
 
   async truncate() {
     return await this.prisma.team.deleteMany({});
   }
 
   async addMemberToTeam(teamMemberDto: TeamMemberDto){
+    console.log('addMemberToTeam()', teamMemberDto)
     try {
-      return await this.prisma.teamMember.create({
+      const added = await this.prisma.teamMember.create({
         data: { ...teamMemberDto },
       });
+
+      const teamMember = await this.findOneTeamMember(added.id)
+      return teamMember
+
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException('Team member with the same data already exists.');
@@ -97,6 +180,29 @@ export class TeamService {
         throw new InternalServerErrorException('Failed to add Team Member.');
       }
     }
+  }
+
+  async findOneTeamMember(id: string){
+    const teamMember = await this.prisma.teamMember.findUnique({
+      where: {id},
+      include: {
+        member: {
+          include: {
+            skills: {
+              include: {
+                TrainingSkill: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!teamMember) {
+      throw new NotFoundException('Team member not found.');
+    }
+
+    return teamMember;
   }
 
   async removeMemberInTeam(id: string){

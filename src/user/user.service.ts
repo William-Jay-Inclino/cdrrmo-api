@@ -1,80 +1,79 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
+import { SearchFieldEnum, User, UserLevelEnum, UserStatusEnum } from './entities';
 
 @Injectable()
 export class UserService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService) {
+		console.log('=== UserService ===')
+	}
 
 
 	// password is hash using bcrypt
-	async create(createUserDto: CreateUserDto): Promise<User> {
+	async create(createUserDto: CreateUserDto) {
 		try {
-
 			const { skills, emergencyContacts, ...userData } = createUserDto;
-
-			// validate if skills exist in training_skills table
-			const skillIds = skills.map((skill) => skill.training_skill_id);
-			const skillsExist = await this.validateTrainingSkillsExist(skillIds)
-
-			if(!skillsExist){
-				throw new NotFoundException('One or more training_skill_id values do not exist.');
+	
+			// validate if skills exist in training_skills table if provided
+			if (skills && skills.length > 0) {
+				const skillIds = skills.map((skill) => skill.training_skill_id);
+				const skillsExist = await this.validateTrainingSkillsExist(skillIds);
+	
+				if (!skillsExist) {
+					throw new NotFoundException('One or more training_skill_id values do not exist.');
+				}
 			}
-
-			delete userData.password // delete password prop since it's not included in user schema
-
+	
+			delete userData.password; // delete password prop since it's not included in user schema
+	
 			// use transaction so that if 1 transaction fails it will rollback
-
 			const result = await this.prisma.$transaction(async (prismaClient) => {
-
-				// Transform emergencyContacts to the Prisma nested input structure
-				const emergencyContactsInput: Prisma.EmergencyContactCreateNestedManyWithoutUserInput = {
-					create: emergencyContacts.map((emergencyContact: EmergencyContactDto) => {
-					  return {
-						name: emergencyContact.name,
-						relationship: emergencyContact.relationship,
-						mobile: emergencyContact.mobile,
-					  };
-					}),
-				};
-				
+				// Transform emergencyContacts to the Prisma nested input structure if provided
+				const emergencyContactsInput: Prisma.EmergencyContactCreateNestedManyWithoutUserInput = emergencyContacts
+					? {
+						  create: emergencyContacts.map((emergencyContact: EmergencyContactDto) => {
+							  return {
+								  name: emergencyContact.name,
+								  relationship: emergencyContact.relationship,
+								  mobile: emergencyContact.mobile,
+							  };
+						  }),
+					  }
+					: undefined;
+	
 				const data: Prisma.UserCreateInput = {
-				...userData,
-				password_hash: await this.hashPassword(createUserDto.password),
-				emergencyContacts: emergencyContactsInput,
+					...userData,
+					password_hash: await this.hashPassword(createUserDto.password),
+					emergencyContacts: emergencyContactsInput,
 				};
-
-				console.log('data', data)
-		
+	
+				console.log('data', data);
+	
 				const user = await prismaClient.user.create({ data });
-				
-				// save userSkills to user_skills table
+	
+				// save userSkills to user_skills table if skills are provided
 				if (skills && skills.length > 0) {
-
 					const userSkills: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
 						return {
 							user_id: user.id,
 							training_skill_id: skill.training_skill_id,
 						};
 					});
-			
+	
 					await prismaClient.userSkill.createMany({ data: userSkills });
 				}
-				
-				
+	
 				return user;
 			});
-
-			const addedUser = await this.findOne(result.id)
-			// remove password_hash in returning newly added user 
-			delete addedUser.password_hash 
-			return addedUser
-
+	
+			const addedUser = await this.findOne(result.id);
+			return addedUser;
 		} catch (error) {
 			console.error('Error:', error);
-		
+	
 			if (error.code === 'P2002') {
 				throw new ConflictException('User with the same data already exists.');
 			} else {
@@ -82,10 +81,11 @@ export class UserService {
 			}
 		}
 	}
+	
 
 	// I use the remove and add (Replace) approach for updating the user skills 
-	async update(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
-		console.log('update()', updateUserDto)
+	async update(userId: string, updateUserDto: UpdateUserDto) {
+		console.log('update()', updateUserDto);
 		try {
 			const { skills, emergencyContacts, ...updatedUserData } = updateUserDto;
 	
@@ -100,7 +100,7 @@ export class UserService {
 				throw new NotFoundException(`User with ID ${userId} not found.`);
 			}
 	
-			// Validate if skills exist in the training_skills table
+			// Validate if skills exist in the training_skills table if provided
 			if (skills && skills.length > 0) {
 				const skillIds = skills.map((skill) => skill.training_skill_id);
 				const skillsExist = await this.validateTrainingSkillsExist(skillIds);
@@ -117,15 +117,15 @@ export class UserService {
 					...updatedUserData,
 				};
 	
-				// Remove all existing skills for the user
-				await prismaClient.userSkill.deleteMany({
-					where: {
-						user_id: userId,
-					},
-				});
-	
-				// Add the new userSkills to the user_skills table
+				// Remove all existing skills for the user if skills are provided
 				if (skills && skills.length > 0) {
+					await prismaClient.userSkill.deleteMany({
+						where: {
+							user_id: userId,
+						},
+					});
+	
+					// Add the new userSkills to the user_skills table
 					const userSkillsToCreate: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
 						return {
 							user_id: userId,
@@ -135,27 +135,27 @@ export class UserService {
 	
 					await prismaClient.userSkill.createMany({ data: userSkillsToCreate });
 				}
-
-				// Remove all existing emergency contacts for the user
-				await prismaClient.emergencyContact.deleteMany({
-					where: {
-					  user_id: userId,
-					},
-				});
-
-				// Add the new emergencyContacts to the emergency_contacts table
+	
+				// Remove all existing emergency contacts for the user if emergencyContacts are provided
 				if (emergencyContacts && emergencyContacts.length > 0) {
+					await prismaClient.emergencyContact.deleteMany({
+						where: {
+							user_id: userId,
+						},
+					});
+	
+					// Add the new emergencyContacts to the emergency_contacts table
 					const emergencyContactsToCreate: Prisma.EmergencyContactCreateManyInput[] = emergencyContacts.map(
-					  (emergencyContact: EmergencyContactDto) => {
-						return {
-						  user_id: userId,
-						  name: emergencyContact.name,
-						  relationship: emergencyContact.relationship,
-						  mobile: emergencyContact.mobile,
-						};
-					  }
+						(emergencyContact: EmergencyContactDto) => {
+							return {
+								user_id: userId,
+								name: emergencyContact.name,
+								relationship: emergencyContact.relationship,
+								mobile: emergencyContact.mobile,
+							};
+						}
 					);
-			
+	
 					await prismaClient.emergencyContact.createMany({ data: emergencyContactsToCreate });
 				}
 	
@@ -171,13 +171,9 @@ export class UserService {
 			});
 	
 			// Transaction was successful
-			// return result;
-
-			const updatedUser = await this.findOne(result.id)
-			// remove password_hash in returning newly added user 
-			delete updatedUser.password_hash 
-			return updatedUser
-
+			const updatedUser = await this.findOne(result.id);
+	
+			return updatedUser;
 		} catch (error) {
 			console.error('Error:', error);
 	
@@ -188,42 +184,107 @@ export class UserService {
 			}
 		}
 	}
-
-	async findAll() {
+	
+	
+	async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
+		console.log('findAll()');
+	  
+		const skip = (page - 1) * pageSize;
+	  
+		let whereCondition: Record<string, any> = {};
+	  
+		if (searchField && searchValue !== undefined) {
+		  if (searchField === 'user_id') {
+			const numericSearchValue = parseInt(searchValue as string, 10);
+			if (!isNaN(numericSearchValue)) {
+				whereCondition = { user_id: numericSearchValue };
+			} else {
+				throw new Error('Invalid user_id. Must be a number.');
+			}
+		  } else if (searchField === 'first_name' || searchField === 'last_name') {
+			whereCondition = {
+			  [searchField]: {
+				contains: searchValue,
+				mode: 'insensitive',
+			  },
+			};
+		  }
+		}
+	  
 		const users = await this.prisma.user.findMany({
-			include: {
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
-				emergencyContacts: true,
-				skills: {
-					include: {
-						TrainingSkill: true,
-					}
-				}     
-			}
+		  select: {
+			id: true,
+			user_id: true,
+			user_name: true,
+			user_level: true,
+			last_name: true,
+			first_name: true,
+			gender: true,
+			address: true,
+			birth_date: true,
+			contact_no: true,
+			blood_type: true,
+			status: true,
+			dispatch_status: true,
+			type: true,
+			bart_id: true,
+			cso_id: true,
+			po_id: true,
+			na_id: true,
+			Bart: true,
+			Cso: true,
+			Po: true,
+			Na: true,
+			teamMembers: true,
+			teamLeader: true,
+			emergencyContacts: true,
+			skills: {
+			  include: {
+				TrainingSkill: true,
+			  },
+			},
+		  },
+		  orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
+		  skip,
+		  take: pageSize,
+		  where: whereCondition,
 		});
-
-		const usersWithoutPassword = users.map(user => {
-
-			return {
-				...user,
-				['password_hash']: ''
-			}
+	  
+		const totalUsers = await this.prisma.user.count({
+			where: whereCondition,
 		});
-
-		console.log('usersWithoutPassword', usersWithoutPassword)
-
-		return usersWithoutPassword
+	  
+		return {
+		  users,
+		  totalUsers,
+		  currentPage: page,
+		  totalPages: Math.ceil(totalUsers / pageSize),
+		};
 	}
 
-	async findOne(id: string): Promise<User>{
+	async findOne(id: string) {
+		console.log('findOne', id)
 		const user = await this.prisma.user.findUnique({
 			where: { id },
-			include: {
+			select: {
+				id: true,
+				user_id: true,
+				user_name: true,
+				user_level: true,
+				last_name: true,
+				first_name: true,
+				gender: true,
+				address: true,
+				birth_date: true,
+				contact_no: true,
+				blood_type: true,
+				status: true,
+				dispatch_status: true,
+				type: true,
+				bart_id: true,
+				cso_id: true,
+				po_id: true,
+				na_id: true,
 				Bart: true, 
 				Cso: true,  
 				Po: true,  
@@ -242,9 +303,113 @@ export class UserService {
 		if (!user) {
 		  throw new NotFoundException('User not found.');
 		}
-		
-		delete user.password_hash
-		return user;
+
+		return user
+	}
+
+	async findByUserName(user_name: string) {
+		console.log('UserService: findByUserName()', user_name)
+		const user = await this.prisma.user.findUnique({
+			where: { user_name },
+		});
+	
+		if (!user) {
+		  throw new NotFoundException('User not found.');
+		}
+
+		return user
+	}
+
+	// User type (team leader) that has no assigned team
+	async findOrphanLeaders() {
+		const users = await this.prisma.user.findMany({
+			where: {
+				user_level: UserLevelEnum.Team_Leader,
+				teamLeader: null, // user is not yet assigned to a team
+				status: UserStatusEnum.Active
+			},	
+			select: {
+				id: true,
+				user_id: true,
+				first_name: true,
+				last_name: true,
+				Bart: true, 
+				Cso: true,  
+				Po: true,  
+				Na: true,  
+				teamMembers: true, 
+				teamLeader: true,  
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					}
+				}     
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
+		});
+
+		return users
+	}
+
+	// find all users without team
+	async findUsersWithoutTeam() {
+		const users = await this.prisma.user.findMany({
+			where: {
+				teamLeader: null, // user is not a team leader
+				status: UserStatusEnum.Active,
+				teamMembers: { // user is not a team member
+					none: {}
+				}
+			},	
+			select: {
+				id: true,
+				user_id: true,
+				first_name: true,
+				last_name: true,
+				Bart: true, 
+				Cso: true,  
+				Po: true,  
+				Na: true,  
+				teamMembers: true, 
+				teamLeader: true,  
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					}
+				}     
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
+		});
+
+		return users
+	}
+
+	async findDispatchers(){
+		const users = await this.prisma.user.findMany({
+			where: {
+				user_level: UserLevelEnum.Dispatcher,
+				status: UserStatusEnum.Active
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+			},
+			orderBy: [
+				{ last_name: 'asc' }, 
+				{ first_name: 'asc' },
+			],
+		})
+
+		return users
 	}
 
 	async isUsernameTaken(user_name: string): Promise<boolean> {
@@ -269,12 +434,29 @@ export class UserService {
 		return await this.prisma.user.deleteMany({});
 	}
 
+	canManage(payload: {currentUser: User, id?: string}): boolean{
+
+		// this is find all endpoint since no id
+		if(!payload.id && payload.currentUser.user_level !== UserLevelEnum.Admin){
+			return false 
+		}
+
+		// this is read one / update endpoint 
+		if(payload.currentUser.user_level !== UserLevelEnum.Admin){
+			if(payload.currentUser.id !== payload.id){
+				return false 
+			}
+		}
+
+		return true
+	}
+
 	private generateUniqueUserName(firstName: string, lastName: string): string {
 		const randomSuffix = Math.floor(Math.random() * 10000); // Generate a random number
 		return `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randomSuffix}`;
 	}
 
-	private hashPassword(password: string) {
+	hashPassword(password: string) {
 		// Hash the password using bcrypt
 		const saltRounds = 10; // You can adjust the number of salt rounds
 		return bcrypt.hash(password, saltRounds);
@@ -294,3 +476,13 @@ export class UserService {
 	}
 
 }
+
+
+
+
+/* 
+
+
+
+
+*/

@@ -1,7 +1,9 @@
 import { Controller, Post, Res, HttpStatus, HttpCode, Param, UsePipes, ValidationPipe, Body } from '@nestjs/common';
 import { SeederService } from './seeder.service';
 import { TableSeederDto } from './dto';
-import { TableEnum } from '../../shared/entities';
+import { TableEnum } from './entities';
+
+
 
 @Controller('/api/v1/seeder')
 export class SeederController {
@@ -69,9 +71,9 @@ export class SeederController {
                 return await this.seederService.seedTeamTbl();
             }
 
-            if(tableSeederDto.tbl_name === TableEnum.TEAM_MEMBER){
-                return await this.seederService.seedTeamMemberTbl();
-            }
+            // if(tableSeederDto.tbl_name === TableEnum.TEAM_MEMBER){
+            //     return await this.seederService.seedTeamMemberTbl();
+            // }
 
             if(tableSeederDto.tbl_name === TableEnum.USER_SKILL){
                 return await this.seederService.seedUserSkillTbl();

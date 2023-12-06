@@ -3,16 +3,18 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
-import { TrainingSkillModule } from './training_skill/training_skill.module';
+import { TrainingSkillModule } from './training-skill/training-skill.module';
 import { EmergencyModule } from './emergency/emergency.module';
 import { BartModule } from './bart/bart.module';
 import { CsoModule } from './cso/cso.module';
 import { PoModule } from './po/po.module';
 import { NaModule } from './na/na.module';
 import { UserModule } from './user/user.module';
-import { SharedModule } from './shared/shared.module';
 import { SeederModule } from './prisma/seeder/seeder.module';
 import { TeamModule } from './team/team.module';
+import { DispatchModule } from './dispatch/dispatch.module';
+import { AuthModule } from './auth/auth.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -27,9 +29,11 @@ import { TeamModule } from './team/team.module';
     PoModule, 
     NaModule, 
     UserModule, 
-    SharedModule,
     SeederModule,
     TeamModule,
+    DispatchModule,
+    AuthModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [
