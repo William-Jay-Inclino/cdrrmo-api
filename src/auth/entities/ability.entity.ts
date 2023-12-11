@@ -9,6 +9,7 @@ import { Na } from "src/na/entities";
 import { PO } from "src/po/entities";
 import { Team, TeamMember } from "src/team/entities";
 import { TrainingSkill } from "src/training-skill/entities";
+import { DispatchLocation } from "src/dispatch-location/entities";
 
 export type Subjects = InferSubjects<
     typeof BART | 
@@ -21,6 +22,7 @@ export type Subjects = InferSubjects<
     typeof TeamMember | 
     typeof TrainingSkill | 
     typeof User | 
+    typeof DispatchLocation | 
     typeof UserSkill
 > | 'all' 
 

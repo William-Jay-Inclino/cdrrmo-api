@@ -6,7 +6,6 @@ import { Dispatch, User } from '@prisma/client';
 import { DispatchStatusEnum } from './entities';
 import { TeamStatusEnum } from 'src/team/entities/team.enum';
 import { UserLevelEnum } from 'src/user/entities';
-import { CreateLocationDto } from './dto/create-location.dto';
 
 @Injectable()
 export class DispatchService {
@@ -338,10 +337,6 @@ export class DispatchService {
     }
 
     return await this.findOne(updatedDispatch.id);
-  }
-
-  async createLocation(name: CreateLocationDto){
-    // TODOS
   }
 
 }

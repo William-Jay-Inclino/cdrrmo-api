@@ -15,6 +15,7 @@ import { TeamModule } from './team/team.module';
 import { DispatchModule } from './dispatch/dispatch.module';
 import { AuthModule } from './auth/auth.module';
 import { ReportModule } from './report/report.module';
+import { LocationModule } from './dispatch-location/location.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ReportModule } from './report/report.module';
     DispatchModule,
     AuthModule,
     ReportModule,
+    LocationModule,
   ],
   controllers: [AppController],
   providers: [
