@@ -7,6 +7,7 @@ import { User, UserLevelEnum } from "src/user/entities";
 import { Dispatch } from "src/dispatch/entities";
 import { Team } from "src/team/entities";
 import { Emergency } from "src/emergency/entities";
+import { DispatchLocation } from "src/dispatch-location/entities";
 
 @Injectable()
 export class AbilityFactory{
@@ -25,6 +26,7 @@ export class AbilityFactory{
         // allow dispatcher to read and update user; There is a validation in controller wherein only dispatcher can read/update own data
         else if (user.user_level === UserLevelEnum.Dispatcher) {
             can(Action.Manage, Dispatch)
+            can(Action.Manage, DispatchLocation)
             can(Action.Read, [Team, User, Emergency])
             can(Action.Update, User)
         } 
