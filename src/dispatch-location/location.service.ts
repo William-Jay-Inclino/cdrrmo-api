@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLocationDto, UpdateLocationDto } from './dto';
-import { DispatchLocation } from './entities';
+import { DispatchLocation, SearchFieldEnum } from './entities';
 
 @Injectable()
 export class LocationService {
@@ -23,6 +23,45 @@ export class LocationService {
 
   async findAll() {
     return await this.prisma.location.findMany();
+  }
+  
+  async findPerPage(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
+
+    const skip = (page - 1) * pageSize;
+	  
+		let whereCondition: Record<string, any> = {}
+
+    if (searchField && searchValue !== undefined) {
+		  if (searchField === SearchFieldEnum.Name) {
+        whereCondition = {
+          [searchField]: {
+            contains: searchValue,
+            mode: 'insensitive',
+          },
+        };
+      }
+		}
+
+    const locations = await this.prisma.location.findMany({
+      orderBy: {
+        name: 'asc'
+      },
+      skip,
+		  take: pageSize,
+		  where: whereCondition,
+    })
+
+    const totalLocations = await this.prisma.location.count({
+			where: whereCondition,
+		});
+
+    return {
+		  locations,
+		  totalLocations,
+		  currentPage: page,
+		  totalPages: Math.ceil(totalLocations / pageSize),
+		};
+
   }
 
   async findOne(id: string) {

@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Query } from '@nestjs/common';
 import { LocationService } from './location.service';
-import { CreateLocationDto, UpdateLocationDto } from './dto';
+import { CreateLocationDto, SearchQueryDto, UpdateLocationDto } from './dto';
 import { AbilitiesGuard, JwtAuthGuard } from '../auth/guards';
 import { CheckAbilities } from 'src/auth/abilities/ability.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -32,6 +32,12 @@ export class LocationController {
 	@CheckAbilities( new ReadLocationAbility() )
 	async findAll(): Promise<DispatchLocation[]> {
 		return await this.locationService.findAll();
+	}
+
+	@Get()
+	@CheckAbilities( new ReadLocationAbility() )
+	async findPerPage(@Query() query: SearchQueryDto) {
+		return await this.locationService.findPerPage(query.page, query.pageSize, query.searchField, query.searchValue);
 	}
 
 	@Get(':id')
