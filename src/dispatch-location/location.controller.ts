@@ -34,7 +34,7 @@ export class LocationController {
 		return await this.locationService.findAll();
 	}
 
-	@Get()
+	@Get('/per-page')
 	@CheckAbilities( new ReadLocationAbility() )
 	async findPerPage(@Query() query: SearchQueryDto) {
 		return await this.locationService.findPerPage(query.page, query.pageSize, query.searchField, query.searchValue);
