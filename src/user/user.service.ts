@@ -194,14 +194,14 @@ export class UserService {
 		let whereCondition: Record<string, any> = {};
 	  
 		if (searchField && searchValue !== undefined) {
-		  if (searchField === 'user_id') {
+		  if (searchField === SearchFieldEnum.Id) {
 			const numericSearchValue = parseInt(searchValue as string, 10);
 			if (!isNaN(numericSearchValue)) {
 				whereCondition = { user_id: numericSearchValue };
 			} else {
 				throw new Error('Invalid user_id. Must be a number.');
 			}
-		  } else if (searchField === 'first_name' || searchField === 'last_name') {
+		  } else if (searchField === SearchFieldEnum.Firstname || searchField === SearchFieldEnum.Lastname) {
 			whereCondition = {
 			  [searchField]: {
 				contains: searchValue,

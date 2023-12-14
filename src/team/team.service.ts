@@ -4,7 +4,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from '@prisma/client';
 import { TeamMemberDto } from './dto';
-import { TeamStatusEnum } from './entities';
+import { SearchFieldEnum, TeamStatusEnum } from './entities';
 
 @Injectable()
 export class TeamService {
@@ -28,11 +28,36 @@ export class TeamService {
     }
   }
 
-  async findAll() {
-    return await this.prisma.team.findMany({
-      where: {
-        is_deleted: false,
-      },
+  async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
+
+    const skip = (page - 1) * pageSize;
+	  
+		let whereCondition: Record<string, any> = {}
+
+    whereCondition.is_deleted = false
+	  
+		if (searchField && searchValue !== undefined) {
+		  if (searchField === SearchFieldEnum.Name) {
+        whereCondition = {
+          [searchField]: {
+            contains: searchValue,
+            mode: 'insensitive',
+          },
+        };
+      } else if (searchField === SearchFieldEnum.Firstname || searchField === SearchFieldEnum.Lastname){
+        whereCondition = {
+          team_leader: {
+            [searchField]: {
+              contains: searchValue,
+              mode: 'insensitive',
+            }
+          }
+        }
+      }
+		}
+
+
+    const teams = await this.prisma.team.findMany({
       include: {
         team_leader: {
           select: {
@@ -42,8 +67,29 @@ export class TeamService {
           }
         },
         teamMembers: true
-      }
+      },
+      orderBy: {
+        name: 'asc'
+      },
+      skip,
+		  take: pageSize,
+		  where: whereCondition,
+      // where: {
+      //   is_deleted: false,
+      // },
     });
+
+    const totalTeams = await this.prisma.team.count({
+			where: whereCondition,
+		});
+
+    return {
+		  teams,
+		  totalTeams,
+		  currentPage: page,
+		  totalPages: Math.ceil(totalTeams / pageSize),
+		};
+
   }
 
   async findAllActive() {

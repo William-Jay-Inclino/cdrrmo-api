@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Query } from '@nestjs/common';
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from '@prisma/client';
-import { TeamMemberDto } from './dto';
+import { SearchQueryDto, TeamMemberDto } from './dto';
 import { AbilitiesGuard, JwtAuthGuard } from '../auth/guards';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateTeamAbility, ReadTeamAbility, UpdateTeamAbility, DeleteTeamAbility, CreateTeamMemberAbility, DeleteTeamMemberAbility } from './abilities';
@@ -39,8 +39,8 @@ export class TeamController {
 
 	@Get()
 	@CheckAbilities( new ReadTeamAbility() )
-	async findAll(): Promise<Team[]> {
-		return await this.teamService.findAll();
+	async findAll(@Query() query: SearchQueryDto) {
+		return await this.teamService.findAll(query.page, query.pageSize, query.searchField, query.searchValue);
 	}
 
 	@Get('/status')

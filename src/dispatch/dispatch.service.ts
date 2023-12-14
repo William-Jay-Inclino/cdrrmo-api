@@ -339,5 +339,4 @@ export class DispatchService {
     return await this.findOne(updatedDispatch.id);
   }
 
-
 }

@@ -221,3 +221,13 @@ model EmergencyContact {
   @@unique([user_id, mobile], name: "UserMobileUnique")
   @@map("emergency_contacts")
 }
+
+model Location {
+  id   String @id @default(uuid())
+  name String @unique
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("locations")
+}
