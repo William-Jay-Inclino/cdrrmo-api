@@ -11,6 +11,7 @@ import { Team, TeamMember } from "src/team/entities";
 import { TrainingSkill } from "src/training-skill/entities";
 import { DispatchLocation } from "src/dispatch-location/entities";
 import { ItemCategory } from "src/item-category/entities";
+import { Item } from "src/item/entities";
 
 export type Subjects = InferSubjects<
     typeof BART | 
@@ -25,7 +26,8 @@ export type Subjects = InferSubjects<
     typeof User | 
     typeof DispatchLocation | 
     typeof UserSkill | 
-    typeof ItemCategory
+    typeof ItemCategory | 
+    typeof Item
 > | 'all' 
 
 export type AppAbility = PureAbility<[Action, Subjects]>

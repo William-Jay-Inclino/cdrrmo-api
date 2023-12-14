@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { ReportModule } from './report/report.module';
 import { LocationModule } from './dispatch-location/location.module';
 import { ItemCategoryModule } from './item-category/item-category.module';
+import { ItemModule } from './item/item.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ItemCategoryModule } from './item-category/item-category.module';
     ReportModule,
     LocationModule,
     ItemCategoryModule,
+    ItemModule,
   ],
   controllers: [AppController],
   providers: [
