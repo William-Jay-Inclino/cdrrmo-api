@@ -8,18 +8,22 @@ export class CreateItemDto {
     category_id: string
     
     @ApiProperty()
+    @IsNotEmpty()
     @IsString()
     name: string
 
     @ApiProperty()
+    @IsNotEmpty()
     @IsString()
     description: string
 
     @ApiProperty()
+    @IsNotEmpty()
     @IsNumber()
     quantity: number
 
     @ApiProperty()
+    @IsNotEmpty()
     @IsNumber()
     cost: number
 
@@ -31,6 +35,7 @@ export class CreateItemDto {
 
 
     @ApiProperty()
+    @IsNotEmpty()
     @IsString()
     serial_number: string
 }
