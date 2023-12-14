@@ -77,7 +77,7 @@ model User {
   Dispatch          Dispatch[]
 
   @@unique([first_name, last_name], name: "unique_first_last_name")
-  @@map("user")
+  @@map("users")
 }
 
 model Team {
@@ -96,7 +96,7 @@ model Team {
 
   is_deleted Boolean @default(false)
 
-  @@map("team")
+  @@map("teams")
 }
 
 model TeamMember {
@@ -110,7 +110,7 @@ model TeamMember {
   updated_at DateTime @updatedAt
 
   @@unique([team_id, member_id], name: "unique_team_id_member_id")
-  @@map("team_member")
+  @@map("team_members")
 }
 
 model UserSkill {
@@ -125,7 +125,7 @@ model UserSkill {
   SkillCertificate SkillCertificate[]
 
   @@unique([user_id, training_skill_id], name: "unique_user_skill")
-  @@map("user_skill")
+  @@map("user_skills")
 }
 
 model TrainingSkill {
@@ -137,7 +137,7 @@ model TrainingSkill {
   updated_at DateTime    @updatedAt
   UserSkill  UserSkill[]
 
-  @@map("training_skill")
+  @@map("training_skills")
 }
 
 model Emergency {
@@ -148,7 +148,7 @@ model Emergency {
   updated_at  DateTime   @updatedAt
   Dispatch    Dispatch[]
 
-  @@map("emergency")
+  @@map("emergencies")
 }
 
 model Bart {
@@ -159,7 +159,7 @@ model Bart {
   updated_at  DateTime @updatedAt
   User        User[]
 
-  @@map("bart")
+  @@map("barts")
 }
 
 model Cso {
@@ -170,7 +170,7 @@ model Cso {
   updated_at  DateTime @updatedAt
   User        User[]
 
-  @@map("cso")
+  @@map("csos")
 }
 
 model Po {
@@ -181,7 +181,7 @@ model Po {
   updated_at  DateTime @updatedAt
   User        User[]
 
-  @@map("po")
+  @@map("pos")
 }
 
 model Na {
@@ -192,7 +192,7 @@ model Na {
   updated_at  DateTime @updatedAt
   User        User[]
 
-  @@map("na")
+  @@map("nas")
 }
 
 model SkillCertificate {
@@ -204,7 +204,7 @@ model SkillCertificate {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("skill_certificate")
+  @@map("skill_certificates")
 }
 
 model EmergencyContact {
@@ -219,7 +219,7 @@ model EmergencyContact {
   updated_at DateTime @updatedAt
 
   @@unique([user_id, mobile], name: "UserMobileUnique")
-  @@map("emergency_contact")
+  @@map("emergency_contacts")
 }
 
 model Location {
@@ -229,7 +229,7 @@ model Location {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("location")
+  @@map("locations")
 }
 
 model Item {
@@ -247,7 +247,7 @@ model Item {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("item")
+  @@map("items")
 }
 
 model ItemCategory {
@@ -258,7 +258,7 @@ model ItemCategory {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("item_category")
+  @@map("item_categories")
 }
 
 model StockMovement {
@@ -273,5 +273,5 @@ model StockMovement {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("stock_movement")
+  @@map("stock_movements")
 }
