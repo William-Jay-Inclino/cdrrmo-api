@@ -10,9 +10,14 @@ export class ItemService {
 
   async create(createItemDto: CreateItemDto) {
     try {
-      return await this.prisma.item.create({
+      const itemCreated = await this.prisma.item.create({
         data: { ...createItemDto },
       });
+
+      const item = await this.findOne(itemCreated.id)
+
+      return item
+
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException('Item with the same data already exists.');
@@ -71,8 +76,11 @@ export class ItemService {
     });
 
     console.log('update success')
+
+    const item = await this.findOne(updatedItem.id)
+
+    return item
   
-    return updatedItem;
   }
   
   async remove(id: string) {
