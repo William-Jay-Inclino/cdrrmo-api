@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Req, Query } from '@nestjs/common';
 import { ItemService } from './item.service';
-import { CreateItemDto, CreateStockMovementDto, UpdateItemDto } from './dto';
+import { CreateItemDto, CreateStockMovementDto, SearchQueryDto, UpdateItemDto } from './dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AbilitiesGuard, JwtAuthGuard } from 'src/auth/guards';
 import { CheckAbilities } from 'src/auth/abilities/ability.decorator';
@@ -30,8 +30,8 @@ export class ItemController {
 
 	@Get()
 	@CheckAbilities( new ReadItemAbility() )
-	async findAll(): Promise<Item[]> {
-		return await this.itemService.findAll();
+	async findAll(@Query() query: SearchQueryDto) {
+		return await this.itemService.findAll(query.page, query.pageSize, query.searchField, query.searchValue);
 	}
 
 	@Get(':id')

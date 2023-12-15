@@ -2,7 +2,7 @@ import { ConflictException, Injectable, InternalServerErrorException, NotFoundEx
 import { CreateItemDto, CreateStockMovementDto, UpdateItemDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Item, User } from '@prisma/client';
-import { MovementTypeEnum } from './entities';
+import { MovementTypeEnum, SearchFieldEnum } from './entities';
 
 @Injectable()
 export class ItemService {
@@ -27,14 +27,45 @@ export class ItemService {
     }
   }
 
-  async findAll() {
-    return await this.prisma.item.findMany(
-      {
-        include: {
-          Category: true,
-        }
-      }
-    );
+  async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
+
+    const skip = (page - 1) * pageSize;
+	  
+		let whereCondition: Record<string, any> = {};
+	  
+		if (searchField && searchValue !== undefined) {
+		  if (searchField === SearchFieldEnum.Name || searchField === SearchFieldEnum.SerialNumber) {
+			whereCondition = {
+			  [searchField]: {
+				contains: searchValue,
+				mode: 'insensitive',
+			  },
+			};
+		  }
+		}
+
+
+    const items = await this.prisma.item.findMany({
+      include: {
+        Category: true,
+      },
+      orderBy: {name: 'asc'},
+      skip,
+      take: pageSize,
+      where: whereCondition,
+    });
+
+    const totalItems = await this.prisma.item.count({
+			where: whereCondition,
+		});
+	  
+		return {
+		  items,
+		  totalItems,
+		  currentPage: page,
+		  totalPages: Math.ceil(totalItems / pageSize),
+		};
+
   }
 
   async findOne(id: string) {
