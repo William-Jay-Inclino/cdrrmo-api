@@ -15,8 +15,11 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for all routes
+  app.enableCors();
+
   configureSwagger(app);
-  enableCors(app);
+  // enableCors(app);
   setupGlobalPipes(app);
 
   const port = process.env.PORT || 3000;
@@ -35,17 +38,17 @@ function configureSwagger(app) {
   SwaggerModule.setup('api', app, document);
 }
 
-function enableCors(app) {
-  app.enableCors({
-    origin: [
-      'http://localhost:5173', 'http://cdrrmo-client:5173',
-      'http://localhost:8000', 'http://cdrrmo-client:8000',
-      'http://localhost',
-    ],
-    methods: '*',
-    credentials: true,
-  });
-}
+// function enableCors(app) {
+//   app.enableCors({
+//     origin: [
+//       'http://localhost:5173', 'http://cdrrmo-client:5173',
+//       'http://localhost:8000', 'http://cdrrmo-client:8000',
+//       'http://localhost', '192.168.1.9'
+//     ],
+//     methods: '*',
+//     credentials: true,
+//   });
+// }
 
 function setupGlobalPipes(app) {
   app.useGlobalPipes(
