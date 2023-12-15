@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UsePipes, ValidationPipe, UseGuards, Req } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { CreateItemDto, CreateStockMovementDto, UpdateItemDto } from './dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -61,15 +61,15 @@ export class ItemController {
 	@CheckAbilities( new CreateItemAbility() )
 	@UsePipes(new ValidationPipe())
 	@Post(':itemId/stock-in')
-	async stockIn(@Param('itemId') itemId: string, @Body() createStockMovementDto: CreateStockMovementDto): Promise<void> {
-		await this.itemService.stockIn(itemId, createStockMovementDto);
+	async stockIn(@Param('itemId') itemId: string, @Body() createStockMovementDto: CreateStockMovementDto, @Req() req): Promise<Item> {
+		return await this.itemService.stockIn(itemId, createStockMovementDto, req.user);
 	}
 
 	@CheckAbilities( new CreateItemAbility() )
 	@UsePipes(new ValidationPipe())
 	@Post(':itemId/stock-out')
-	async stockOut(@Param('itemId') itemId: string, @Body() createStockMovementDto: CreateStockMovementDto): Promise<void> {
-		await this.itemService.stockOut(itemId, createStockMovementDto);
+	async stockOut(@Param('itemId') itemId: string, @Body() createStockMovementDto: CreateStockMovementDto, @Req() req): Promise<Item> {
+		return await this.itemService.stockOut(itemId, createStockMovementDto, req.user);
 	}
 
 }

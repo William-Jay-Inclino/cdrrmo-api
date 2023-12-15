@@ -75,6 +75,7 @@ model User {
   updated_at        DateTime           @updatedAt
   emergencyContacts EmergencyContact[]
   Dispatch          Dispatch[]
+  StockMovement     StockMovement[]
 
   @@unique([first_name, last_name], name: "unique_first_last_name")
   @@map("user")
@@ -265,6 +266,8 @@ model StockMovement {
   id            String   @id @default(uuid())
   item_id       String
   item          Item     @relation(fields: [item_id], references: [id])
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id       String
   quantity      Int
   movement_type Int
   movement_date DateTime

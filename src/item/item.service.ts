@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateItemDto, CreateStockMovementDto, UpdateItemDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { Item } from '@prisma/client';
+import { Item, User } from '@prisma/client';
 import { MovementTypeEnum } from './entities';
 
 @Injectable()
@@ -99,46 +99,65 @@ export class ItemService {
     return await this.prisma.item.deleteMany({});
   }
 
-  async stockIn(itemId: string, createStockMovementDto: CreateStockMovementDto): Promise<void> {
-    await this.updateStock(itemId, createStockMovementDto, MovementTypeEnum.StockIn);
+  async stockIn(itemId: string, createStockMovementDto: CreateStockMovementDto, currentUser: User): Promise<Item> {
+    return await this.updateStock(itemId, createStockMovementDto, MovementTypeEnum.StockIn, currentUser);
   }
   
-  async stockOut(itemId: string, createStockMovementDto: CreateStockMovementDto): Promise<void> {
-    await this.updateStock(itemId, createStockMovementDto, MovementTypeEnum.StockOut);
+  async stockOut(itemId: string, createStockMovementDto: CreateStockMovementDto, currentUser: User): Promise<Item> {
+    return await this.updateStock(itemId, createStockMovementDto, MovementTypeEnum.StockOut, currentUser);
   }
 
-  private async updateStock(itemId: string, dto: CreateStockMovementDto, movementType: MovementTypeEnum): Promise<void> {
-    const { quantity, remarks } = dto;
+// ... other imports ...
 
-    // Start a database transaction
-    await this.prisma.$transaction([
-      // Fetch the item within the transaction
-      this.prisma.item.findUnique({
-        where: { id: itemId },
-        include: { StockMovement: true },
-      }),
-      // Create a new stock movement record within the transaction
-      this.prisma.stockMovement.create({
-        data: {
-          item: { connect: { id: itemId } },
-          quantity,
-          movement_type: movementType,
-          movement_date: new Date(),
-          remarks,
+private async updateStock(itemId: string, dto: CreateStockMovementDto, movementType: MovementTypeEnum, currentUser: User): Promise<Item> {
+  const { quantity, remarks } = dto;
+
+  // Fetch the current item within the transaction
+  const currentItem = await this.prisma.item.findUnique({
+    where: { id: itemId },
+    include: { StockMovement: true },
+  });
+
+  if (!currentItem) {
+    throw new Error(`Item with id ${itemId} not found.`);
+  }
+
+  // Validate stock-out quantity
+  if (movementType === MovementTypeEnum.StockOut && currentItem.quantity < quantity) {
+    throw new Error(`Insufficient stock for item ${itemId}.`);
+  }
+
+  // Start a database transaction
+  await this.prisma.$transaction([
+    // Create a new stock movement record within the transaction
+    this.prisma.stockMovement.create({
+      data: {
+        item: { connect: { id: itemId } },
+        user: { connect: { id: currentUser.id } }, 
+        quantity,
+        movement_type: movementType,
+        movement_date: new Date(),
+        remarks,
+      },
+    }),
+    // Update the item quantity within the transaction
+    this.prisma.item.update({
+      where: { id: itemId },
+      data: {
+        quantity: {
+          [movementType === MovementTypeEnum.StockIn ? 'increment' : 'decrement']: quantity,
         },
-      }),
-      // Update the item quantity within the transaction
-      this.prisma.item.update({
-        where: { id: itemId },
-        data: 
-          { 
-            quantity: { 
-              [movementType === MovementTypeEnum.StockIn ? 'increment' : 'decrement']: quantity 
-            } 
-          },
-      }),
-    ]);
-  }
+      },
+    }),
+  ]);
+
+  // Fetch and return the updated item within the transaction
+  const updatedItem = await this.findOne(itemId);
+
+  return updatedItem;
+}
+
+  
 
 
 }
