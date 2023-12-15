@@ -42,7 +42,14 @@ export class ItemService {
       where: { id },
       include: { 
         Category: true,
-        StockMovement: true
+        StockMovement: {
+          include: {
+            user: true
+          },
+          orderBy: {
+            movement_date: 'desc'
+          }
+        }
        }
     });
 
