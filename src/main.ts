@@ -3,8 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import * as express from 'express';
-import * as path from 'path';
+// import * as express from 'express';
+// import * as path from 'path';
 
 async function bootstrap() {
   try {
@@ -25,7 +25,7 @@ async function bootstrap() {
   setupGlobalPipes(app);
 
   // Serve images from the 'uploads' directory
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
