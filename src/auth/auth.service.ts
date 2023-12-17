@@ -120,7 +120,7 @@ export class AuthService {
         gender: GenderEnum.Male,
         address: 'Ormoc City',
         birth_date: new Date('1990-01-01T00:00:00.000Z'),
-        contact_no: '09106024371',
+        contact_no: '9106024371',
         blood_type: 'A+',
         status: UserStatusEnum.Active,
         type: UserTypeEnum.LGU_Regular,

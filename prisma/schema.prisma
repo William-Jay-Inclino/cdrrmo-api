@@ -120,10 +120,11 @@ model UserSkill {
   user_id           String
   TrainingSkill     TrainingSkill @relation(fields: [training_skill_id], references: [id], onDelete: Cascade)
   training_skill_id String
+  image_url         String?
 
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @updatedAt
-  SkillCertificate SkillCertificate[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  // SkillCertificate SkillCertificate[]
 
   @@unique([user_id, training_skill_id], name: "unique_user_skill")
   @@map("user_skill")
@@ -196,17 +197,17 @@ model Na {
   @@map("na")
 }
 
-model SkillCertificate {
-  id             String    @id @default(uuid())
-  userSkill      UserSkill @relation(fields: [user_skill_id], references: [id], onDelete: Cascade)
-  user_skill_id  String
-  certificateUrl String // You can store the URL or information about the certificate
+// model SkillCertificate {
+//   id             String    @id @default(uuid())
+//   userSkill      UserSkill @relation(fields: [user_skill_id], references: [id], onDelete: Cascade)
+//   user_skill_id  String
+//   certificateUrl String // You can store the URL or information about the certificate
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+//   created_at DateTime @default(now())
+//   updated_at DateTime @updatedAt
 
-  @@map("skill_certificate")
-}
+//   @@map("skill_certificate")
+// }
 
 model EmergencyContact {
   id           String @id @default(uuid())

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import * as mockData from './mock-data';
-import { Bart, Cso, Emergency, Na, Po, SkillCertificate, Team, TeamMember, TrainingSkill, User, UserSkill } from '@prisma/client';
+import { Bart, Cso, Emergency, Na, Po, Team, TeamMember, TrainingSkill, User, UserSkill } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { GenderEnum, UserLevelEnum, UserStatusEnum, UserTypeEnum } from 'src/user/entities';
 import { TeamStatusEnum } from 'src/team/entities';
@@ -18,7 +18,6 @@ export class SeederService {
     teams: Team[] = []
     teamMembers: TeamMember[] = []
     userSkills: UserSkill[] = []
-    skillCertificates: SkillCertificate[] = []
 
     constructor(private readonly prisma: PrismaService) {}
 
@@ -38,7 +37,6 @@ export class SeederService {
         this.teams = await this.seedTeamTbl()
         // this.teamMembers = await this.seedTeamMemberTbl()
         this.userSkills = await this.seedUserSkillTbl()
-        this.skillCertificates = await this.seedSkillCertificateTbl()
     }
 
     async seedTrainingSkillTbl(): Promise<TrainingSkill[]>{
@@ -483,11 +481,6 @@ export class SeederService {
 
         return seedData
 
-    } 
-
-    async seedSkillCertificateTbl(): Promise<SkillCertificate[]>{
-        console.log('seeding skill certificate table...')
-        return []
     } 
 
     async truncateDb(){

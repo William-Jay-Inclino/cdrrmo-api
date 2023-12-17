@@ -18,6 +18,7 @@ import { ReportModule } from './report/report.module';
 import { LocationModule } from './dispatch-location/location.module';
 import { ItemCategoryModule } from './item-category/item-category.module';
 import { ItemModule } from './item/item.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ItemModule } from './item/item.module';
     LocationModule,
     ItemCategoryModule,
     ItemModule,
+    CommonModule,
   ],
   controllers: [AppController],
   providers: [
