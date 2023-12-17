@@ -60,6 +60,7 @@ export class UserService {
 						return {
 							user_id: user.id,
 							training_skill_id: skill.training_skill_id,
+							image_url: skill.image_url
 						};
 					});
 	
@@ -119,6 +120,7 @@ export class UserService {
 	
 				// Remove all existing skills for the user if skills are provided
 				if (skills && skills.length > 0) {
+					console.log('has skills', skills)
 					await prismaClient.userSkill.deleteMany({
 						where: {
 							user_id: userId,
@@ -130,8 +132,11 @@ export class UserService {
 						return {
 							user_id: userId,
 							training_skill_id: skill.training_skill_id,
+							image_url: skill.image_url,
 						};
 					});
+
+					console.log('userSkillsToCreate', userSkillsToCreate)
 	
 					await prismaClient.userSkill.createMany({ data: userSkillsToCreate });
 				}

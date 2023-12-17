@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsNotEmpty, IsString } from "class-validator"
+import { IsNotEmpty, IsOptional, IsString } from "class-validator"
 
 
 export class UserSkillDto{
@@ -7,4 +7,10 @@ export class UserSkillDto{
     @IsNotEmpty()
     @IsString()
     training_skill_id: string 
+
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    image_url?: string;
 }

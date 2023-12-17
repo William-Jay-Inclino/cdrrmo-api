@@ -79,10 +79,6 @@ export class SeederController {
                 return await this.seederService.seedUserSkillTbl();
             }
 
-            if(tableSeederDto.tbl_name === TableEnum.SKILL_CERTIFICATE){
-                return await this.seederService.seedSkillCertificateTbl();
-            }
-
             return 'Table seeding completed!'
         } catch (error) {
             return 'Table seeding failed! ' + error;
