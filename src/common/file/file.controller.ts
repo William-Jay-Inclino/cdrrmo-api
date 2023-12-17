@@ -1,10 +1,23 @@
-import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Get, Query, Param, Res, NotFoundException, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+  Query,
+  UsePipes,
+  ValidationPipe,
+  Get,
+  Res,
+  Param,
+  NotFoundException,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { validationResult } from 'express-validator';
-import * as mimeTypes from 'mime-types';
 import * as path from 'path';
+import * as fsPromises from 'fs/promises';
+import { extname } from 'path';
+import * as mimeTypes from 'mime-types';
 import * as fs from 'fs';
 
 
@@ -30,39 +43,29 @@ export class FileController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('image', {
-    storage: diskStorage({
-      destination: (req, file, callback) => {
-        const destination = path.join(process.cwd(), 'uploads'); // Adjusted the path
-        console.log('Destination:', destination);
-        callback(null, destination);
-      },
-      filename: (req, file, callback) => {
-        // Use the previous filename if available in the query parameters, otherwise generate a new one
-        const previousFilename = req.query.previousFilename as string || '';
-        console.log('previousFilename', previousFilename);
-        const timestamp = new Date().getTime();
-        const uniqueFileName = `${file.originalname}-${timestamp}${extname(file.originalname)}`;
-
-        // Delete the previous file if a previous filename is provided
-        if (previousFilename && previousFilename !== '') {
-          const previousFilePath = path.join(process.cwd(), 'uploads', previousFilename); // Adjusted the path
-          fs.unlinkSync(previousFilePath);
-        }
-
-        return callback(null, uniqueFileName);
+  @UsePipes(new ValidationPipe())
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: FileController.getFileDestination,
+        filename: FileController.getFileName,
+      }),
+      limits: {
+        fileSize: 1024 * 1024 * 5,
       },
     }),
-    limits: {
-      fileSize: 1024 * 1024 * 5,  // 5 MB file size limit
-    },
-  }))
+  )
+
+
   async uploadFile(@UploadedFile() file, @Query('previousFilename') previousFilename) {
     try {
-      // Custom validation using express-validator functions
-      const errors = validationResult(file);
-      if (!errors.isEmpty()) {
-        throw new BadRequestException(errors.array().map(error => error.msg).join(', '));
+      const uploadsPath = path.join(process.cwd(), 'uploads');
+
+      // Check if the "uploads" directory exists, create it if not
+      try {
+        await fsPromises.access(uploadsPath);
+      } catch (error) {
+        await fsPromises.mkdir(uploadsPath, { recursive: true });
       }
 
       // Validate file type
@@ -72,11 +75,44 @@ export class FileController {
       }
 
       // The file is now available on the local server, and you can save its information to the database or perform other actions.
+
+      // Delete the previous file if a previous filename is provided
+      if (previousFilename && previousFilename !== '') {
+        const previousFilePath = path.join(process.cwd(), 'uploads', previousFilename);
+        await fsPromises.unlink(previousFilePath);
+      }
+
       return { filename: file.filename };
     } catch (error) {
       // Log the error
       console.error('Error uploading file:', error.message);
-      throw error;  // Rethrow the error for global exception handling, if any
+      throw error;
     }
+  }
+
+  private static async getFileDestination(req, file, callback) {
+    const destination = path.join(process.cwd(), 'uploads');
+    console.log('Destination:', destination);
+    callback(null, destination);
+  }
+
+  private static async getFileName(req, file, callback) {
+    // Use the previous filename if available in the query parameters, otherwise generate a new one
+    const previousFilename = req.query.previousFilename as string || '';
+    console.log('previousFilename', previousFilename);
+    const timestamp = new Date().getTime();
+    const uniqueFileName = `${file.originalname}-${timestamp}${extname(file.originalname)}`;
+
+    // Delete the previous file if a previous filename is provided
+    if (previousFilename && previousFilename !== '') {
+      const previousFilePath = path.join(process.cwd(), 'uploads', previousFilename);
+      await fsPromises.unlink(previousFilePath).catch((unlinkError) => {
+        if (unlinkError) {
+          console.error('Error deleting previous file:', unlinkError);
+        }
+      });
+    }
+
+    callback(null, uniqueFileName);
   }
 }
