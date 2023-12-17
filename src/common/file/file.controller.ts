@@ -1,4 +1,4 @@
-import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Get, Query } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Get, Query, Param, Res, NotFoundException, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -7,18 +7,36 @@ import * as mimeTypes from 'mime-types';
 import * as path from 'path';
 import * as fs from 'fs';
 
+
 @Controller('/api/v1/image')
 export class FileController {
 
-  @Get()
-  async test() {
-    return 'test';
+  @Get('/get-image/:filename')
+  async getImage(@Res() res: Response, @Param('filename') filename: string) {
+    try {
+      const imagePath = path.join(process.cwd(), 'uploads', filename);
+
+      // Check if the image file exists
+      if (!fs.existsSync(imagePath)) {
+        throw new NotFoundException('Image not found');
+      }
+
+      // Send the image file as the response
+      (res as any).sendFile(imagePath);
+    } catch (error) {
+      // Handle other errors
+      throw new NotFoundException('Image not found');
+    }
   }
 
   @Post()
   @UseInterceptors(FileInterceptor('image', {
     storage: diskStorage({
-      destination: path.join(__dirname, '../../uploads'),
+      destination: (req, file, callback) => {
+        const destination = path.join(process.cwd(), 'uploads'); // Adjusted the path
+        console.log('Destination:', destination);
+        callback(null, destination);
+      },
       filename: (req, file, callback) => {
         // Use the previous filename if available in the query parameters, otherwise generate a new one
         const previousFilename = req.query.previousFilename as string || '';
@@ -28,7 +46,7 @@ export class FileController {
 
         // Delete the previous file if a previous filename is provided
         if (previousFilename && previousFilename !== '') {
-          const previousFilePath = path.join(__dirname, '../../uploads', previousFilename);
+          const previousFilePath = path.join(process.cwd(), 'uploads', previousFilename); // Adjusted the path
           fs.unlinkSync(previousFilePath);
         }
 
