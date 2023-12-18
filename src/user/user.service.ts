@@ -126,21 +126,21 @@ export class UserService {
 				// if (skills && skills.length > 0) {
 					console.log('has skills', skills)
 
-					const existingSkills = await prismaClient.userSkill.findMany({
-						where: {
-						  user_id: userId,
-						},
-						select: {
-						  image_url: true,
-						},
-					});
+					// const existingSkills = await prismaClient.userSkill.findMany({
+					// 	where: {
+					// 	  user_id: userId,
+					// 	},
+					// 	select: {
+					// 	  image_url: true,
+					// 	},
+					// });
 
 					// Delete the image files associated with the existing skills
-					existingSkills.forEach((existingSkill) => {
-						if (existingSkill.image_url) {
-						  this.fileService.removeFile(existingSkill.image_url);
-						}
-					});
+					// existingSkills.forEach((existingSkill) => {
+					// 	if (existingSkill.image_url) {
+					// 	  this.fileService.removeFile(existingSkill.image_url);
+					// 	}
+					// });
 
 					await prismaClient.userSkill.deleteMany({
 						where: {
