@@ -4,10 +4,14 @@ import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmergencyContactDto, CreateUserDto, UpdateUserDto } from './dto';
 import { SearchFieldEnum, User, UserLevelEnum, UserStatusEnum } from './entities';
+import { FileService } from '../common/file/file.service';
 
 @Injectable()
 export class UserService {
-	constructor(private readonly prisma: PrismaService) {
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly fileService: FileService
+	) {
 		console.log('=== UserService ===')
 	}
 
@@ -119,8 +123,25 @@ export class UserService {
 				};
 	
 				// Remove all existing skills for the user if skills are provided
-				if (skills && skills.length > 0) {
+				// if (skills && skills.length > 0) {
 					console.log('has skills', skills)
+
+					const existingSkills = await prismaClient.userSkill.findMany({
+						where: {
+						  user_id: userId,
+						},
+						select: {
+						  image_url: true,
+						},
+					});
+
+					// Delete the image files associated with the existing skills
+					existingSkills.forEach((existingSkill) => {
+						if (existingSkill.image_url) {
+						  this.fileService.removeFile(existingSkill.image_url);
+						}
+					});
+
 					await prismaClient.userSkill.deleteMany({
 						where: {
 							user_id: userId,
@@ -139,7 +160,7 @@ export class UserService {
 					console.log('userSkillsToCreate', userSkillsToCreate)
 	
 					await prismaClient.userSkill.createMany({ data: userSkillsToCreate });
-				}
+				// }
 	
 				// Remove all existing emergency contacts for the user if emergencyContacts are provided
 				if (emergencyContacts && emergencyContacts.length > 0) {

@@ -42,7 +42,7 @@ export class FileController {
       },
     }),
   )
-  async uploadFile(@UploadedFile() file, @Query('previousFilename') previousFilename) {
+  async uploadFile(@UploadedFile() file) {
     try {
       // Check if the "uploads" directory exists, create it if not
       if (!fs.existsSync(FileController.UPLOADS_PATH)) {
@@ -58,14 +58,14 @@ export class FileController {
       // The file is now available on the local server, and you can save its information to the database or perform other actions.
 
       // Delete the previous file if a previous filename is provided
-      if (previousFilename && previousFilename !== '') {
-        const previousFilePath = path.join(FileController.UPLOADS_PATH, previousFilename);
-        await fsPromises.unlink(previousFilePath).catch((unlinkError) => {
-          if (unlinkError) {
-            FileController.logger.error(`Error deleting previous file '${previousFilePath}':`, unlinkError);
-          }
-        });
-      }
+      // if (previousFilename && previousFilename !== '') {
+      //   const previousFilePath = path.join(FileController.UPLOADS_PATH, previousFilename);
+      //   await fsPromises.unlink(previousFilePath).catch((unlinkError) => {
+      //     if (unlinkError) {
+      //       FileController.logger.error(`Error deleting previous file '${previousFilePath}':`, unlinkError);
+      //     }
+      //   });
+      // }
 
       return { filename: file.filename };
     } catch (error) {
