@@ -25,6 +25,7 @@ export class User {
     status: UserStatusEnum 
     dispatch_status?: DispatchStatusEnum 
     type: UserTypeEnum
+    image_url: string | null
 
     emergencyContacts?: EmergencyContact[]
 

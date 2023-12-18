@@ -103,4 +103,9 @@ export class CreateUserDto {
     @Validate(IsValidEmergencyContactDtoArray)
     emergencyContacts?: EmergencyContactDto[];
 
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    image_url?: string;
+
 }
