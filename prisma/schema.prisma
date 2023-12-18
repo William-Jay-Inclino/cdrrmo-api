@@ -77,6 +77,8 @@ model User {
   Dispatch          Dispatch[]
   StockMovement     StockMovement[]
 
+  image_url String?
+
   @@unique([first_name, last_name], name: "unique_first_last_name")
   @@map("user")
 }
