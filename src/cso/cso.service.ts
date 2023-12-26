@@ -23,12 +23,16 @@ export class CsoService {
   }
 
   async findAll() {
-    return await this.prisma.cso.findMany();
+    return await this.prisma.cso.findMany({
+      where: {
+        is_deleted: false
+      }
+    });
   }
 
   async findOne(id: string) {
     const cso = await this.prisma.cso.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
     });
 
     if (!cso) {
@@ -60,15 +64,32 @@ export class CsoService {
     return updatedCso;
   }
   
-  async remove(id: string) {
-    const existingCso = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingCso = await this.findOne(id);
   
-    await this.prisma.cso.delete({
-      where: { id },
-    });
+  //   await this.prisma.cso.delete({
+  //     where: { id },
+  //   });
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.cso.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.cso.deleteMany({});

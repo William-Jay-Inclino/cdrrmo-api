@@ -54,8 +54,8 @@ export class ItemController {
 	@Delete(':id')
 	@CheckAbilities( new DeleteItemAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
-		await this.itemService.remove(id);
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
+		return await this.itemService.remove(id);
 	}
 
 	@CheckAbilities( new CreateItemAbility() )

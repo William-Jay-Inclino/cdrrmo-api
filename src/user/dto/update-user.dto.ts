@@ -85,4 +85,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @IsArray()
     @Validate(IsValidEmergencyContactDtoArray)
     emergencyContacts: EmergencyContactDto[];
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    image_url?: string;
 }

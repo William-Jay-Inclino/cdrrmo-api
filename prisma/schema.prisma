@@ -77,7 +77,10 @@ model User {
   Dispatch          Dispatch[]
   StockMovement     StockMovement[]
 
-  @@unique([first_name, last_name], name: "unique_first_last_name")
+  image_url  String?
+  is_deleted Boolean @default(false)
+
+  // @@unique([first_name, last_name], name: "unique_first_last_name")
   @@map("user")
 }
 
@@ -139,6 +142,8 @@ model TrainingSkill {
   updated_at DateTime    @updatedAt
   UserSkill  UserSkill[]
 
+  is_deleted Boolean @default(false)
+
   @@map("training_skill")
 }
 
@@ -149,6 +154,8 @@ model Emergency {
   created_at  DateTime   @default(now())
   updated_at  DateTime   @updatedAt
   Dispatch    Dispatch[]
+
+  is_deleted Boolean @default(false)
 
   @@map("emergency")
 }
@@ -161,6 +168,8 @@ model Bart {
   updated_at  DateTime @updatedAt
   User        User[]
 
+  is_deleted Boolean @default(false)
+
   @@map("bart")
 }
 
@@ -171,6 +180,8 @@ model Cso {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   User        User[]
+
+  is_deleted Boolean @default(false)
 
   @@map("cso")
 }
@@ -183,6 +194,8 @@ model Po {
   updated_at  DateTime @updatedAt
   User        User[]
 
+  is_deleted Boolean @default(false)
+
   @@map("po")
 }
 
@@ -193,6 +206,8 @@ model Na {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   User        User[]
+
+  is_deleted Boolean @default(false)
 
   @@map("na")
 }
@@ -220,7 +235,7 @@ model EmergencyContact {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@unique([user_id, mobile], name: "UserMobileUnique")
+  // @@unique([user_id, mobile], name: "UserMobileUnique")
   @@map("emergency_contact")
 }
 
@@ -244,10 +259,12 @@ model Item {
   quantity      Int
   cost          Decimal
   date_acquired DateTime
-  serial_number String
+  // serial_number String
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  is_deleted Boolean @default(false)
 
   @@map("item")
 }
@@ -260,13 +277,15 @@ model ItemCategory {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  is_deleted Boolean @default(false)
+
   @@map("item_category")
 }
 
 model StockMovement {
   id            String   @id @default(uuid())
   item_id       String
-  item          Item     @relation(fields: [item_id], references: [id])
+  item          Item     @relation(fields: [item_id], references: [id], onDelete: Cascade)
   user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id       String
   quantity      Int

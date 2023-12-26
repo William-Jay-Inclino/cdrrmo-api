@@ -14,12 +14,18 @@ export class SearchQueryDto {
     @Type(() => Number)
     pageSize: number;
 
-    @ApiProperty()
+    @ApiProperty({
+        required: false, // Set required to false for optional fields
+        enum: SearchFieldEnum,
+    })
     @IsOptional()
     @IsEnum(SearchFieldEnum)
     searchField?: SearchFieldEnum;
 
-    @ApiProperty()
+    @ApiProperty({
+        required: false, // Set required to false for optional fields
+        type: String, // Specify the type explicitly
+    })
     @IsOptional()
     @Transform(({ value }: TransformFnParams) => String(value))
     @IsString()

@@ -16,8 +16,22 @@ export class DispatchService {
 
 
   // this accepts single or multiple dispatch
-  async create(createDispatchDtos: CreateDispatchDto[]): Promise<Dispatch[]> {
+  async create(createDispatchDtos: CreateDispatchDto[]): Promise<{is_success: boolean, data: Dispatch[], msg: string}> {
     let createdDispatches: Dispatch[] = [];
+
+    let canCreate = true 
+
+    for(let x of createDispatchDtos){
+      canCreate = await this.isTeamActive(x.team_id)
+    }
+
+    if(!canCreate){
+      return {
+        is_success: false,
+        data: [],
+        msg: 'Selected team(s) are already dispatched'
+      }
+    }
   
     try {
       await this.prisma.$transaction(async (prismaClient) => {
@@ -53,13 +67,35 @@ export class DispatchService {
         }),
       );
   
-      return createdDispatches;
+      return {
+        is_success: true,
+        data: createdDispatches,
+        msg: 'Teams dispatched successfully'
+      }
     } catch (error) {
       console.error('Prisma Error:', error);
       throw new InternalServerErrorException('Failed to create Dispatch.');
     }
   }
   
+  async isTeamActive(teamId: string): Promise<boolean> {
+    const team = await this.prisma.team.findUnique({
+      select: {
+        id: true,
+        status: true,
+      },
+      where: {
+        id: teamId
+      }
+    })
+
+    if(team.status === TeamStatusEnum.Active){
+      return true 
+    }
+
+    return false 
+
+  }
 
   // this will get all dispatched records today or records that are not completed
   

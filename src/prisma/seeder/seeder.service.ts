@@ -33,10 +33,10 @@ export class SeederService {
         this.csos = await this.seedCsoTbl()
         this.pos = await this.seedPoTbl()
         this.nas = await this.seedNaTbl()
-        this.users = await this.seedUserTbl()
-        this.teams = await this.seedTeamTbl()
+        // this.users = await this.seedUserTbl()
+        // this.teams = await this.seedTeamTbl()
         // this.teamMembers = await this.seedTeamMemberTbl()
-        this.userSkills = await this.seedUserSkillTbl()
+        // this.userSkills = await this.seedUserSkillTbl()
     }
 
     async seedTrainingSkillTbl(): Promise<TrainingSkill[]>{

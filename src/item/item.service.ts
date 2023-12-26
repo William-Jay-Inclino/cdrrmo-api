@@ -34,7 +34,7 @@ export class ItemService {
 		let whereCondition: Record<string, any> = {};
 	  
 		if (searchField && searchValue !== undefined) {
-		  if (searchField === SearchFieldEnum.Name || searchField === SearchFieldEnum.SerialNumber) {
+		  if (searchField === SearchFieldEnum.Name) {
 			whereCondition = {
 			  [searchField]: {
 				contains: searchValue,
@@ -44,6 +44,9 @@ export class ItemService {
 		  }
 		}
 
+    whereCondition = {
+			is_deleted: false
+		}
 
     const items = await this.prisma.item.findMany({
       include: {
@@ -70,7 +73,7 @@ export class ItemService {
 
   async findOne(id: string) {
     const item = await this.prisma.item.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
       include: { 
         Category: true,
         StockMovement: {
@@ -121,17 +124,34 @@ export class ItemService {
   
   }
   
-  async remove(id: string) {
-    const existingItem = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingItem = await this.findOne(id);
   
-    await this.prisma.item.delete({
-      where: { id },
-    });
+  //   await this.prisma.item.delete({
+  //     where: { id },
+  //   });
 
-    console.log('remove success')
+  //   console.log('remove success')
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.item.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.item.deleteMany({});
@@ -147,53 +167,53 @@ export class ItemService {
 
 // ... other imports ...
 
-private async updateStock(itemId: string, dto: CreateStockMovementDto, movementType: MovementTypeEnum, currentUser: User): Promise<Item> {
-  const { quantity, remarks } = dto;
+  private async updateStock(itemId: string, dto: CreateStockMovementDto, movementType: MovementTypeEnum, currentUser: User): Promise<Item> {
+    const { quantity, remarks } = dto;
 
-  // Fetch the current item within the transaction
-  const currentItem = await this.prisma.item.findUnique({
-    where: { id: itemId },
-    include: { StockMovement: true },
-  });
-
-  if (!currentItem) {
-    throw new Error(`Item with id ${itemId} not found.`);
-  }
-
-  // Validate stock-out quantity
-  if (movementType === MovementTypeEnum.StockOut && currentItem.quantity < quantity) {
-    throw new Error(`Insufficient stock for item ${itemId}.`);
-  }
-
-  // Start a database transaction
-  await this.prisma.$transaction([
-    // Create a new stock movement record within the transaction
-    this.prisma.stockMovement.create({
-      data: {
-        item: { connect: { id: itemId } },
-        user: { connect: { id: currentUser.id } }, 
-        quantity,
-        movement_type: movementType,
-        movement_date: new Date(),
-        remarks,
-      },
-    }),
-    // Update the item quantity within the transaction
-    this.prisma.item.update({
+    // Fetch the current item within the transaction
+    const currentItem = await this.prisma.item.findUnique({
       where: { id: itemId },
-      data: {
-        quantity: {
-          [movementType === MovementTypeEnum.StockIn ? 'increment' : 'decrement']: quantity,
+      include: { StockMovement: true },
+    });
+
+    if (!currentItem) {
+      throw new Error(`Item with id ${itemId} not found.`);
+    }
+
+    // Validate stock-out quantity
+    if (movementType === MovementTypeEnum.StockOut && currentItem.quantity < quantity) {
+      throw new Error(`Insufficient stock for item ${itemId}.`);
+    }
+
+    // Start a database transaction
+    await this.prisma.$transaction([
+      // Create a new stock movement record within the transaction
+      this.prisma.stockMovement.create({
+        data: {
+          item: { connect: { id: itemId } },
+          user: { connect: { id: currentUser.id } }, 
+          quantity,
+          movement_type: movementType,
+          movement_date: new Date(),
+          remarks,
         },
-      },
-    }),
-  ]);
+      }),
+      // Update the item quantity within the transaction
+      this.prisma.item.update({
+        where: { id: itemId },
+        data: {
+          quantity: {
+            [movementType === MovementTypeEnum.StockIn ? 'increment' : 'decrement']: quantity,
+          },
+        },
+      }),
+    ]);
 
-  // Fetch and return the updated item within the transaction
-  const updatedItem = await this.findOne(itemId);
+    // Fetch and return the updated item within the transaction
+    const updatedItem = await this.findOne(itemId);
 
-  return updatedItem;
-}
+    return updatedItem;
+  }
 
   
 

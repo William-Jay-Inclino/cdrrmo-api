@@ -32,10 +32,4 @@ export class CreateItemDto {
     @IsDate()
     @Transform(({ value }) => new Date(value))
     date_acquired: Date
-
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    serial_number: string
 }

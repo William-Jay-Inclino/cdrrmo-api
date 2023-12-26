@@ -107,12 +107,12 @@ export class AuthService {
     
 }
 
-  async createAdmin(username: string, password: string): Promise<User> {
+  async createAdmin(password: string): Promise<User> {
     try {
       const passwordHash = await this.userService.hashPassword(password);
 
       const data = {
-        user_name: username,
+        user_name: 'admin.cdrrmo',
         user_level: UserLevelEnum.Admin,
         password_hash: passwordHash,
         last_name: 'admin',

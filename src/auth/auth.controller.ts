@@ -33,7 +33,7 @@ export class AuthController {
     type: LoginDto, 
   })
 	async create(@Body() loginDto: LoginDto): Promise<User> {
-		return await this.authService.createAdmin(loginDto.username, loginDto.password)
+		return await this.authService.createAdmin(loginDto.password)
 	}
 
   @Patch('/update-password/:id')

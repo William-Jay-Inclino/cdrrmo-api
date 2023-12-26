@@ -23,12 +23,16 @@ export class PoService {
   }
 
   async findAll() {
-    return await this.prisma.po.findMany();
+    return await this.prisma.po.findMany({
+      where: {
+        is_deleted: false
+      }
+    });
   }
 
   async findOne(id: string) {
     const po = await this.prisma.po.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
     });
 
     if (!po) {
@@ -61,15 +65,32 @@ export class PoService {
     return updatedPo;
   }
   
-  async remove(id: string) {
-    const existingPo = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingPo = await this.findOne(id);
   
-    await this.prisma.po.delete({
-      where: { id },
-    });
+  //   await this.prisma.po.delete({
+  //     where: { id },
+  //   });
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.po.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.po.deleteMany({});

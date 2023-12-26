@@ -56,8 +56,8 @@ export class EmergencyController {
 	@Delete(':id')
 	@CheckAbilities( new DeleteEmergencyAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
-		await this.emergencyService.remove(id);
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
+		return await this.emergencyService.remove(id);
 	}
 
 }

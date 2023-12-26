@@ -35,10 +35,4 @@ export class UpdateItemDto extends PartialType(CreateItemDto) {
     date_acquired: Date
 
 
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    serial_number: string
-
-
 }

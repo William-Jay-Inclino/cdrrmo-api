@@ -23,12 +23,16 @@ export class BartService {
   }
 
   async findAll() {
-    return await this.prisma.bart.findMany();
+    return await this.prisma.bart.findMany({
+      where: {
+        is_deleted: false
+      }
+    });
   }
 
   async findOne(id: string) {
     const bart = await this.prisma.bart.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
     });
 
     if (!bart) {
@@ -65,17 +69,34 @@ export class BartService {
     return updatedBart;
   }
   
-  async remove(id: string) {
-    const existingBart = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingBart = await this.findOne(id);
   
-    await this.prisma.bart.delete({
-      where: { id },
-    });
+  //   await this.prisma.bart.delete({
+  //     where: { id },
+  //   });
 
-    console.log('remove success')
+  //   console.log('remove success')
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.bart.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.bart.deleteMany({});
