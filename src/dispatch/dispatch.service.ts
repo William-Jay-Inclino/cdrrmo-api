@@ -23,6 +23,9 @@ export class DispatchService {
 
     for(let x of createDispatchDtos){
       canCreate = await this.isTeamActive(x.team_id)
+      if(!canCreate){
+        break
+      }
     }
 
     if(!canCreate){
