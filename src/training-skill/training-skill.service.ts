@@ -24,12 +24,16 @@ export class TrainingSkillService {
   }
 
   async findAll() {
-    return await this.prisma.trainingSkill.findMany();
+    return await this.prisma.trainingSkill.findMany({
+      where: {
+        is_deleted: false
+      }
+    });
   }
 
   async findOne(id: string) {
     const trainingSkill = await this.prisma.trainingSkill.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
     });
 
     if (!trainingSkill) {
@@ -65,16 +69,33 @@ export class TrainingSkillService {
     return updatedSkill;
   }
   
-  async remove(id: string) {
-    const existingSkill = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingSkill = await this.findOne(id);
   
-    // If the record exists, proceed with the delete
-    await this.prisma.trainingSkill.delete({
-      where: { id },
-    });
+  //   // If the record exists, proceed with the delete
+  //   await this.prisma.trainingSkill.delete({
+  //     where: { id },
+  //   });
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.trainingSkill.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.trainingSkill.deleteMany({});

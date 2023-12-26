@@ -56,7 +56,7 @@ export class PoController {
 	@Delete(':id')
 	@CheckAbilities( new DeletePoAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
-		await this.poService.remove(id);
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
+		return await this.poService.remove(id);
 	}
 }

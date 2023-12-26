@@ -118,9 +118,9 @@ export class UserController {
 
 	@Delete(':id')
 	@CheckAbilities( new DeleteUserAbility() )
-	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
-		await this.userService.remove(id);
+	// @HttpCode(HttpStatus.NO_CONTENT)
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
+		return await this.userService.remove(id);
 	}
 
 

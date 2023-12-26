@@ -23,12 +23,16 @@ export class EmergencyService {
   }
 
   async findAll() {
-    return await this.prisma.emergency.findMany();
+    return await this.prisma.emergency.findMany({
+      where: {
+        is_deleted: false
+      }
+    });
   }
 
   async findOne(id: string) {
     const emergency = await this.prisma.emergency.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
     });
 
     if (!emergency) {
@@ -60,15 +64,32 @@ export class EmergencyService {
     return updatedEmergency;
   }
   
-  async remove(id: string) {
-    const existingEmergency = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingEmergency = await this.findOne(id);
   
-    await this.prisma.emergency.delete({
-      where: { id },
-    });
+  //   await this.prisma.emergency.delete({
+  //     where: { id },
+  //   });
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.emergency.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.emergency.deleteMany({});

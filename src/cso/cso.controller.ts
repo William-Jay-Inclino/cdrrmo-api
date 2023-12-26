@@ -56,7 +56,7 @@ export class CsoController {
 	@Delete(':id')
 	@CheckAbilities( new DeleteCsoAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
-		await this.csoService.remove(id);
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
+		return await this.csoService.remove(id);
 	}
 }

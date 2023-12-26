@@ -236,6 +236,10 @@ export class UserService {
 			};
 		  }
 		}
+
+		whereCondition = {
+			is_deleted: false
+		}
 	  
 		const users = await this.prisma.user.findMany({
 		  select: {
@@ -292,7 +296,7 @@ export class UserService {
 	async findOne(id: string) {
 		console.log('findOne', id)
 		const user = await this.prisma.user.findUnique({
-			where: { id },
+			where: { id, is_deleted: false },
 			select: {
 				id: true,
 				user_id: true,
@@ -354,7 +358,8 @@ export class UserService {
 			where: {
 				user_level: UserLevelEnum.Team_Leader,
 				teamLeader: null, // user is not yet assigned to a team
-				status: UserStatusEnum.Active
+				status: UserStatusEnum.Active,
+				is_deleted: false
 			},	
 			select: {
 				id: true,
@@ -391,7 +396,8 @@ export class UserService {
 				status: UserStatusEnum.Active,
 				teamMembers: { // user is not a team member
 					none: {}
-				}
+				},
+				is_deleted: false
 			},	
 			select: {
 				id: true,
@@ -424,7 +430,8 @@ export class UserService {
 		const users = await this.prisma.user.findMany({
 			where: {
 				user_level: UserLevelEnum.Dispatcher,
-				status: UserStatusEnum.Active
+				status: UserStatusEnum.Active,
+				is_deleted: false
 			},
 			select: {
 				id: true,
@@ -448,14 +455,36 @@ export class UserService {
 		return !!user; 
 	}
 
-	async remove(id: string) {
+	// async remove(id: string) {
+	// 	const existingUser = await this.findOne(id);
+	  
+	// 	await this.prisma.user.delete({
+	// 	  where: { id },
+	// 	});
+	  
+	// 	return true;
+	// }
+
+	async remove(id: string): Promise<{is_deleted: boolean}> {
 		const existingUser = await this.findOne(id);
-	  
-		await this.prisma.user.delete({
-		  where: { id },
+	
+		if (!existingUser) {
+			return {is_deleted: false}
+		}
+	
+		// Should unable to delete if status is active
+		if (existingUser.status === UserStatusEnum.Active) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.user.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
 		});
-	  
-		return true;
+	
+		return {is_deleted: true}
 	}
 
 	async truncate() {

@@ -56,7 +56,7 @@ export class NaController {
 	@Delete(':id')
 	@CheckAbilities( new DeleteNaAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
-		await this.naService.remove(id);
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
+		return await this.naService.remove(id);
 	}
 }

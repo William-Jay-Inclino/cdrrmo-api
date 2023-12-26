@@ -61,8 +61,8 @@ export class TrainingSkillController {
 	@Delete(':id')
 	@CheckAbilities( new DeleteTrainingSkillAbility() )
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async remove(@Param('id') id: string): Promise<void> {
+	async remove(@Param('id') id: string): Promise<{is_deleted: boolean}> {
 		// Remove a training skill by ID. It throws an exception if not found.
-		await this.trainingSkillService.remove(id);
+		return await this.trainingSkillService.remove(id);
 	}
 }

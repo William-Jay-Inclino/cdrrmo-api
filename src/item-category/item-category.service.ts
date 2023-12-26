@@ -22,12 +22,16 @@ export class ItemCategoryService {
   }
 
   async findAll() {
-    return await this.prisma.itemCategory.findMany();
+    return await this.prisma.itemCategory.findMany({
+      where: {
+        is_deleted: false
+      }
+    });
   }
 
   async findOne(id: string) {
     const itemCategory = await this.prisma.itemCategory.findUnique({
-      where: { id },
+      where: { id, is_deleted: false },
     });
 
     if (!itemCategory) {
@@ -63,17 +67,34 @@ export class ItemCategoryService {
     return updatedItemCategory;
   }
   
-  async remove(id: string) {
-    const existingItemCategory = await this.findOne(id);
+  // async remove(id: string) {
+  //   const existingItemCategory = await this.findOne(id);
   
-    await this.prisma.itemCategory.delete({
-      where: { id },
-    });
+  //   await this.prisma.itemCategory.delete({
+  //     where: { id },
+  //   });
 
-    console.log('remove success')
+  //   console.log('remove success')
   
-    return true;
-  }
+  //   return true;
+  // }
+
+  async remove(id: string): Promise<{is_deleted: boolean}> {
+		const existingData = await this.findOne(id);
+	
+		if (!existingData) {
+			return {is_deleted: false}
+		}
+	
+		await this.prisma.itemCategory.update({
+			where: { id },
+			data: {
+				is_deleted: true,
+			},
+		});
+	
+		return {is_deleted: true}
+	}
 
   async truncate() {
     return await this.prisma.itemCategory.deleteMany({});
