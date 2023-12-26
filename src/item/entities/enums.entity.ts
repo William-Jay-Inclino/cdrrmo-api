@@ -8,5 +8,4 @@ export enum MovementTypeEnum {
 
 export enum SearchFieldEnum{
     Name = 'name',
-    SerialNumber = 'serial_number',
 }

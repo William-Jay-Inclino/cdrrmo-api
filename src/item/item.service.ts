@@ -34,7 +34,7 @@ export class ItemService {
 		let whereCondition: Record<string, any> = {};
 	  
 		if (searchField && searchValue !== undefined) {
-		  if (searchField === SearchFieldEnum.Name || searchField === SearchFieldEnum.SerialNumber) {
+		  if (searchField === SearchFieldEnum.Name) {
 			whereCondition = {
 			  [searchField]: {
 				contains: searchValue,
