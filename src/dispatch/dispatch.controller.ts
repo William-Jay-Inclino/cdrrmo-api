@@ -25,10 +25,10 @@ export class DispatchController {
   	@Post()
 	@CheckAbilities( new CreateDispatchAbility() )
 	@UsePipes(new ValidationPipe())
-	async create(@Body() createDispatchDtos: CreateDispatchDto[] | CreateDispatchDto): Promise<Dispatch[]> {
+	async create(@Body() createDispatchDtos: CreateDispatchDto[] | CreateDispatchDto): Promise<{is_success: boolean, data: Dispatch[], msg: string}> {
 		console.log('create()')
 		if (!Array.isArray(createDispatchDtos)) {
-		throw new BadRequestException('Invalid input. Expected an array.');
+			throw new BadRequestException('Invalid input. Expected an array.');
 		}
 
 		return await this.dispatchService.create(createDispatchDtos);
