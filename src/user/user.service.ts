@@ -20,44 +20,44 @@ export class UserService {
 	async create(createUserDto: CreateUserDto) {
 		try {
 			const { skills, emergencyContacts, ...userData } = createUserDto;
-	
+
 			// validate if skills exist in training_skills table if provided
 			if (skills && skills.length > 0) {
 				const skillIds = skills.map((skill) => skill.training_skill_id);
 				const skillsExist = await this.validateTrainingSkillsExist(skillIds);
-	
+
 				if (!skillsExist) {
 					throw new NotFoundException('One or more training_skill_id values do not exist.');
 				}
 			}
-	
+
 			delete userData.password; // delete password prop since it's not included in user schema
-	
+
 			// use transaction so that if 1 transaction fails it will rollback
 			const result = await this.prisma.$transaction(async (prismaClient) => {
 				// Transform emergencyContacts to the Prisma nested input structure if provided
 				const emergencyContactsInput: Prisma.EmergencyContactCreateNestedManyWithoutUserInput = emergencyContacts
 					? {
-						  create: emergencyContacts.map((emergencyContact: EmergencyContactDto) => {
-							  return {
-								  name: emergencyContact.name,
-								  relationship: emergencyContact.relationship,
-								  mobile: emergencyContact.mobile,
-							  };
-						  }),
-					  }
+						create: emergencyContacts.map((emergencyContact: EmergencyContactDto) => {
+							return {
+								name: emergencyContact.name,
+								relationship: emergencyContact.relationship,
+								mobile: emergencyContact.mobile,
+							};
+						}),
+					}
 					: undefined;
-	
+
 				const data: Prisma.UserCreateInput = {
 					...userData,
 					password_hash: await this.hashPassword(createUserDto.password),
 					emergencyContacts: emergencyContactsInput,
 				};
-	
+
 				console.log('data', data);
-	
+
 				const user = await prismaClient.user.create({ data });
-	
+
 				// save userSkills to user_skills table if skills are provided
 				if (skills && skills.length > 0) {
 					const userSkills: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
@@ -67,18 +67,18 @@ export class UserService {
 							image_url: skill.image_url
 						};
 					});
-	
+
 					await prismaClient.userSkill.createMany({ data: userSkills });
 				}
-	
+
 				return user;
 			});
-	
+
 			const addedUser = await this.findOne(result.id);
 			return addedUser;
 		} catch (error) {
 			console.error('Error:', error);
-	
+
 			if (error.code === 'P2002') {
 				throw new ConflictException('User with the same data already exists.');
 			} else {
@@ -86,82 +86,82 @@ export class UserService {
 			}
 		}
 	}
-	
+
 
 	// I use the remove and add (Replace) approach for updating the user skills 
 	async update(userId: string, updateUserDto: UpdateUserDto) {
 		console.log('update()', updateUserDto);
 		try {
 			const { skills, emergencyContacts, ...updatedUserData } = updateUserDto;
-	
+
 			// Check if the user with the provided userId exists
 			const existingUser = await this.prisma.user.findUnique({
 				where: {
 					id: userId,
 				},
 			});
-	
+
 			if (!existingUser) {
 				throw new NotFoundException(`User with ID ${userId} not found.`);
 			}
-	
+
 			// Validate if skills exist in the training_skills table if provided
 			if (skills && skills.length > 0) {
 				const skillIds = skills.map((skill) => skill.training_skill_id);
 				const skillsExist = await this.validateTrainingSkillsExist(skillIds);
-	
+
 				if (!skillsExist) {
 					throw new NotFoundException('One or more training_skill_id values do not exist.');
 				}
 			}
-	
+
 			// Use a transaction to ensure atomicity
 			const result = await this.prisma.$transaction(async (prismaClient) => {
 				// Define the data to update in the user record
 				const userDataToUpdate: Prisma.UserUpdateInput = {
 					...updatedUserData,
 				};
-	
+
 				// Remove all existing skills for the user if skills are provided
 				// if (skills && skills.length > 0) {
-					console.log('has skills', skills)
+				console.log('has skills', skills)
 
-					// const existingSkills = await prismaClient.userSkill.findMany({
-					// 	where: {
-					// 	  user_id: userId,
-					// 	},
-					// 	select: {
-					// 	  image_url: true,
-					// 	},
-					// });
+				// const existingSkills = await prismaClient.userSkill.findMany({
+				// 	where: {
+				// 	  user_id: userId,
+				// 	},
+				// 	select: {
+				// 	  image_url: true,
+				// 	},
+				// });
 
-					// Delete the image files associated with the existing skills
-					// existingSkills.forEach((existingSkill) => {
-					// 	if (existingSkill.image_url) {
-					// 	  this.fileService.removeFile(existingSkill.image_url);
-					// 	}
-					// });
+				// Delete the image files associated with the existing skills
+				// existingSkills.forEach((existingSkill) => {
+				// 	if (existingSkill.image_url) {
+				// 	  this.fileService.removeFile(existingSkill.image_url);
+				// 	}
+				// });
 
-					await prismaClient.userSkill.deleteMany({
-						where: {
-							user_id: userId,
-						},
-					});
-	
-					// Add the new userSkills to the user_skills table
-					const userSkillsToCreate: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
-						return {
-							user_id: userId,
-							training_skill_id: skill.training_skill_id,
-							image_url: skill.image_url,
-						};
-					});
+				await prismaClient.userSkill.deleteMany({
+					where: {
+						user_id: userId,
+					},
+				});
 
-					console.log('userSkillsToCreate', userSkillsToCreate)
-	
-					await prismaClient.userSkill.createMany({ data: userSkillsToCreate });
+				// Add the new userSkills to the user_skills table
+				const userSkillsToCreate: Prisma.UserSkillCreateManyInput[] = skills.map((skill) => {
+					return {
+						user_id: userId,
+						training_skill_id: skill.training_skill_id,
+						image_url: skill.image_url,
+					};
+				});
+
+				console.log('userSkillsToCreate', userSkillsToCreate)
+
+				await prismaClient.userSkill.createMany({ data: userSkillsToCreate });
 				// }
-	
+
 				// Remove all existing emergency contacts for the user if emergencyContacts are provided
 				if (emergencyContacts && emergencyContacts.length > 0) {
 					await prismaClient.emergencyContact.deleteMany({
@@ -169,7 +169,7 @@ export class UserService {
 							user_id: userId,
 						},
 					});
-	
+
 					// Add the new emergencyContacts to the emergency_contacts table
 					const emergencyContactsToCreate: Prisma.EmergencyContactCreateManyInput[] = emergencyContacts.map(
 						(emergencyContact: EmergencyContactDto) => {
@@ -181,10 +181,10 @@ export class UserService {
 							};
 						}
 					);
-	
+
 					await prismaClient.emergencyContact.createMany({ data: emergencyContactsToCreate });
 				}
-	
+
 				// Update the user in the database
 				const updatedUser = await prismaClient.user.update({
 					where: {
@@ -192,17 +192,17 @@ export class UserService {
 					},
 					data: userDataToUpdate,
 				});
-	
+
 				return updatedUser;
 			});
-	
+
 			// Transaction was successful
 			const updatedUser = await this.findOne(result.id);
-	
+
 			return updatedUser;
 		} catch (error) {
 			console.error('Error:', error);
-	
+
 			if (error.code === 'P2002') {
 				throw new ConflictException('User with the same data already exists.');
 			} else {
@@ -210,86 +210,86 @@ export class UserService {
 			}
 		}
 	}
-	
-	
+
+
 	async findAll(page: number = 1, pageSize: number = 10, searchField?: SearchFieldEnum, searchValue?: string | number) {
 		console.log('findAll()');
-	  
+
 		const skip = (page - 1) * pageSize;
-	  
+
 		let whereCondition: Record<string, any> = {};
-	  
+
 		if (searchField && searchValue !== undefined) {
-		  if (searchField === SearchFieldEnum.Id) {
-			const numericSearchValue = parseInt(searchValue as string, 10);
-			if (!isNaN(numericSearchValue)) {
-				whereCondition = { user_id: numericSearchValue };
-			} else {
-				throw new Error('Invalid user_id. Must be a number.');
+			if (searchField === SearchFieldEnum.Id) {
+				const numericSearchValue = parseInt(searchValue as string, 10);
+				if (!isNaN(numericSearchValue)) {
+					whereCondition = { user_id: numericSearchValue };
+				} else {
+					throw new Error('Invalid user_id. Must be a number.');
+				}
+			} else if (searchField === SearchFieldEnum.Firstname || searchField === SearchFieldEnum.Lastname) {
+				whereCondition = {
+					[searchField]: {
+						contains: searchValue,
+						mode: 'insensitive',
+					},
+				};
 			}
-		  } else if (searchField === SearchFieldEnum.Firstname || searchField === SearchFieldEnum.Lastname) {
-			whereCondition = {
-			  [searchField]: {
-				contains: searchValue,
-				mode: 'insensitive',
-			  },
-			};
-		  }
 		}
 
 		whereCondition = {
 			is_deleted: false
 		}
-	  
+
 		const users = await this.prisma.user.findMany({
-		  select: {
-			id: true,
-			user_id: true,
-			user_name: true,
-			user_level: true,
-			last_name: true,
-			first_name: true,
-			image_url: true,
-			gender: true,
-			address: true,
-			birth_date: true,
-			contact_no: true,
-			blood_type: true,
-			status: true,
-			dispatch_status: true,
-			type: true,
-			bart_id: true,
-			cso_id: true,
-			po_id: true,
-			na_id: true,
-			Bart: true,
-			Cso: true,
-			Po: true,
-			Na: true,
-			teamMembers: true,
-			teamLeader: true,
-			emergencyContacts: true,
-			skills: {
-			  include: {
-				TrainingSkill: true,
-			  },
+			select: {
+				id: true,
+				user_id: true,
+				user_name: true,
+				user_level: true,
+				last_name: true,
+				first_name: true,
+				image_url: true,
+				gender: true,
+				address: true,
+				birth_date: true,
+				contact_no: true,
+				blood_type: true,
+				status: true,
+				dispatch_status: true,
+				type: true,
+				bart_id: true,
+				cso_id: true,
+				po_id: true,
+				na_id: true,
+				Bart: true,
+				Cso: true,
+				Po: true,
+				Na: true,
+				teamMembers: true,
+				teamLeader: true,
+				emergencyContacts: true,
+				skills: {
+					include: {
+						TrainingSkill: true,
+					},
+				},
 			},
-		  },
-		  orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
-		  skip,
-		  take: pageSize,
-		  where: whereCondition,
+			orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
+			skip,
+			take: pageSize,
+			where: whereCondition,
 		});
-	  
+
 		const totalUsers = await this.prisma.user.count({
 			where: whereCondition,
 		});
-	  
+
 		return {
-		  users,
-		  totalUsers,
-		  currentPage: page,
-		  totalPages: Math.ceil(totalUsers / pageSize),
+			users,
+			totalUsers,
+			currentPage: page,
+			totalPages: Math.ceil(totalUsers / pageSize),
 		};
 	}
 
@@ -317,23 +317,23 @@ export class UserService {
 				cso_id: true,
 				po_id: true,
 				na_id: true,
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
+				Bart: true,
+				Cso: true,
+				Po: true,
+				Na: true,
+				teamMembers: true,
+				teamLeader: true,
 				emergencyContacts: true,
 				skills: {
 					include: {
 						TrainingSkill: true,
 					}
-				}     
+				}
 			}
 		});
-	
+
 		if (!user) {
-		  throw new NotFoundException('User not found.');
+			throw new NotFoundException('User not found.');
 		}
 
 		return user
@@ -344,9 +344,9 @@ export class UserService {
 		const user = await this.prisma.user.findUnique({
 			where: { user_name },
 		});
-	
+
 		if (!user) {
-		  throw new NotFoundException('User not found.');
+			throw new NotFoundException('User not found.');
 		}
 
 		return user
@@ -360,27 +360,27 @@ export class UserService {
 				teamLeader: null, // user is not yet assigned to a team
 				status: UserStatusEnum.Active,
 				is_deleted: false
-			},	
+			},
 			select: {
 				id: true,
 				user_id: true,
 				first_name: true,
 				last_name: true,
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
+				Bart: true,
+				Cso: true,
+				Po: true,
+				Na: true,
+				teamMembers: true,
+				teamLeader: true,
 				emergencyContacts: true,
 				skills: {
 					include: {
 						TrainingSkill: true,
 					}
-				}     
+				}
 			},
 			orderBy: [
-				{ last_name: 'asc' }, 
+				{ last_name: 'asc' },
 				{ first_name: 'asc' },
 			],
 		});
@@ -398,27 +398,27 @@ export class UserService {
 					none: {}
 				},
 				is_deleted: false
-			},	
+			},
 			select: {
 				id: true,
 				user_id: true,
 				first_name: true,
 				last_name: true,
-				Bart: true, 
-				Cso: true,  
-				Po: true,  
-				Na: true,  
-				teamMembers: true, 
-				teamLeader: true,  
+				Bart: true,
+				Cso: true,
+				Po: true,
+				Na: true,
+				teamMembers: true,
+				teamLeader: true,
 				emergencyContacts: true,
 				skills: {
 					include: {
 						TrainingSkill: true,
 					}
-				}     
+				}
 			},
 			orderBy: [
-				{ last_name: 'asc' }, 
+				{ last_name: 'asc' },
 				{ first_name: 'asc' },
 			],
 		});
@@ -426,7 +426,7 @@ export class UserService {
 		return users
 	}
 
-	async findDispatchers(){
+	async findDispatchers() {
 		const users = await this.prisma.user.findMany({
 			where: {
 				user_level: UserLevelEnum.Dispatcher,
@@ -439,7 +439,7 @@ export class UserService {
 				last_name: true,
 			},
 			orderBy: [
-				{ last_name: 'asc' }, 
+				{ last_name: 'asc' },
 				{ first_name: 'asc' },
 			],
 		})
@@ -449,59 +449,69 @@ export class UserService {
 
 	async isUsernameTaken(user_name: string): Promise<boolean> {
 		const user = await this.prisma.user.findUnique({
-		  where: { user_name },
+			where: { user_name },
 		});
-	
-		return !!user; 
+
+		return !!user;
 	}
 
 	// async remove(id: string) {
 	// 	const existingUser = await this.findOne(id);
-	  
+
 	// 	await this.prisma.user.delete({
 	// 	  where: { id },
 	// 	});
-	  
+
 	// 	return true;
 	// }
 
-	async remove(id: string): Promise<{is_deleted: boolean}> {
+	async remove(id: string): Promise<{ is_deleted: boolean }> {
 		const existingUser = await this.findOne(id);
-	
+
 		if (!existingUser) {
-			return {is_deleted: false}
+			return { is_deleted: false }
 		}
-	
+
 		// Should unable to delete if status is active
 		if (existingUser.status === UserStatusEnum.Active) {
-			return {is_deleted: false}
+			return { is_deleted: false }
 		}
-	
+
 		await this.prisma.user.update({
 			where: { id },
 			data: {
 				is_deleted: true,
 			},
 		});
-	
-		return {is_deleted: true}
+
+		return { is_deleted: true }
 	}
 
 	async truncate() {
 		return await this.prisma.user.deleteMany({});
 	}
 
-	canManage(payload: {currentUser: User, id?: string}): boolean{
+
+	// only admin and dispatcher can manage
+	canManage(payload: { currentUser: User, id?: string }): boolean {
+
+		console.log('canManage', payload)
 
 		// this is find all endpoint since no id
-		if(!payload.id && payload.currentUser.user_level !== UserLevelEnum.Admin){
-			return false 
+		const isAdminOrDispatcher = (payload.currentUser.user_level === UserLevelEnum.Admin) || (payload.currentUser.user_level === UserLevelEnum.Dispatcher)
+		console.log('isAdminOrDispatcher', isAdminOrDispatcher)
+
+		if (!payload.id && !isAdminOrDispatcher) {
+			return false
 		}
 
 		// this is read one / update endpoint 
-		if(payload.currentUser.user_level !== UserLevelEnum.Admin){
-			if(payload.currentUser.id !== payload.id){
-				return false 
+
+		if (!isAdminOrDispatcher) {
+			// if (payload.currentUser.user_level !== UserLevelEnum.Admin) {
+			console.log('payload.currentUser.user_level !== UserLevelEnum.Admin')
+			if (payload.currentUser.id !== payload.id) {
+				return false
 			}
 		}
 
@@ -521,14 +531,14 @@ export class UserService {
 
 	private async validateTrainingSkillsExist(skillIds: string[]): Promise<boolean> {
 		const existingSkills = await this.prisma.trainingSkill.findMany({
-		  where: {
-			id: {
-			  in: skillIds,
+			where: {
+				id: {
+					in: skillIds,
+				},
 			},
-		  },
 		});
 
-	  
+
 		return existingSkills.length === skillIds.length;
 	}
 

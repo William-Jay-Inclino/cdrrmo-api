@@ -10,27 +10,28 @@ import { Emergency } from "src/emergency/entities";
 import { DispatchLocation } from "src/dispatch-location/entities";
 
 @Injectable()
-export class AbilityFactory{
-    defineAbility(user: User){
+export class AbilityFactory {
+    defineAbility(user: User) {
 
         console.log('AbilityFactory: defineAbility')
 
         const { can, cannot, build } = new AbilityBuilder(PureAbility as AbilityClass<AppAbility>)
 
         // admin can manage all
-        if (user.user_level === UserLevelEnum.Admin){
+        if (user.user_level === UserLevelEnum.Admin) {
             can(Action.Manage, 'all')
-        } 
-        
+        }
+
         // dispatcher can only manage dispatch module
         // allow dispatcher to read and update user; There is a validation in controller wherein only dispatcher can read/update own data
         else if (user.user_level === UserLevelEnum.Dispatcher) {
             can(Action.Manage, Dispatch)
             can(Action.Manage, DispatchLocation)
-            can(Action.Read, [Team, User, Emergency])
+            can(Action.Read, [User, Emergency])
             can(Action.Update, User)
-        } 
-        
+            can(Action.Manage, Team)
+        }
+
         // TODO: Set permissions for other user levels (Team lead & Field operator)
         // for now disallow permissions...
         else {
