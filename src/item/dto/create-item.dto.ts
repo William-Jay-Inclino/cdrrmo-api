@@ -6,7 +6,7 @@ export class CreateItemDto {
     @ApiProperty()
     @IsUUID()
     category_id: string
-    
+
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
@@ -16,6 +16,11 @@ export class CreateItemDto {
     @IsNotEmpty()
     @IsString()
     description: string
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    serial_number: string
 
     @ApiProperty()
     @IsNotEmpty()
