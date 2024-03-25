@@ -288,6 +288,9 @@ export class DispatchService {
         updatedDispatch = await this.findOne(updatedDispatch.id);
       }
 
+      // @ts-ignore
+      updatedDispatch.time_of_call = this.formatDate(updatedDispatch.time_of_call)
+
       return updatedDispatch;
     } catch (error) {
       console.error('Prisma Error:', error);
@@ -390,7 +393,11 @@ export class DispatchService {
       throw new InternalServerErrorException('Failed to update Dispatch.');
     }
 
-    return await this.findOne(updatedDispatch.id);
+    const dispatch = await this.findOne(updatedDispatch.id);
+    // @ts-ignore
+    dispatch.time_of_call = this.formatDate(dispatch.time_of_call)
+
+    return dispatch
   }
 
   private formatDate(date: Date) {
