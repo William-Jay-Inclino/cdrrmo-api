@@ -16,60 +16,63 @@ export class DispatchService {
 
 
   // this accepts single or multiple dispatch
-  async create(createDispatchDtos: CreateDispatchDto[]): Promise<{is_success: boolean, data: Dispatch[], msg: string}> {
+  async create(createDispatchDtos: CreateDispatchDto[]): Promise<{ is_success: boolean, data: Dispatch[], msg: string }> {
     let createdDispatches: Dispatch[] = [];
 
-    let canCreate = true 
+    let canCreate = true
 
-    for(let x of createDispatchDtos){
+    for (let x of createDispatchDtos) {
       canCreate = await this.isTeamActive(x.team_id)
-      if(!canCreate){
+      if (!canCreate) {
         break
       }
     }
 
-    if(!canCreate){
+    if (!canCreate) {
       return {
         is_success: false,
         data: [],
         msg: 'Selected team(s) are already dispatched'
       }
     }
-  
+
     try {
       await this.prisma.$transaction(async (prismaClient) => {
         for (const createDispatchDto of createDispatchDtos) {
           const parsedTimeOfCall = new Date(createDispatchDto.time_of_call);
-  
+
           // Ensure that the parsedTimeOfCall is a valid date
           if (isNaN(parsedTimeOfCall.getTime())) {
             throw new BadRequestException('Invalid date format for time_of_call');
           }
-  
+
           const created = await prismaClient.dispatch.create({
             data: {
               ...createDispatchDto,
               time_of_call: parsedTimeOfCall,
             },
           });
-  
+
           // Find the associated Team and update its status to 2
           await prismaClient.team.update({
             where: { id: createDispatchDto.team_id },
             data: { status: 2 },
           });
-  
+
           createdDispatches.push(created);
         }
       });
-  
+
       // Fetch the created dispatches after the transaction is committed
       createdDispatches = await Promise.all(
         createdDispatches.map(async (createdDispatch) => {
-          return await this.findOne(createdDispatch.id);
+          const dispatch = await this.findOne(createdDispatch.id);
+          // @ts-ignore
+          dispatch.time_of_call = this.formatDate(dispatch.time_of_call)
+          return dispatch
         }),
       );
-  
+
       return {
         is_success: true,
         data: createdDispatches,
@@ -80,7 +83,7 @@ export class DispatchService {
       throw new InternalServerErrorException('Failed to create Dispatch.');
     }
   }
-  
+
   async isTeamActive(teamId: string): Promise<boolean> {
     const team = await this.prisma.team.findUnique({
       select: {
@@ -92,17 +95,17 @@ export class DispatchService {
       }
     })
 
-    if(team.status === TeamStatusEnum.Active){
-      return true 
+    if (team.status === TeamStatusEnum.Active) {
+      return true
     }
 
-    return false 
+    return false
 
   }
 
   // this will get all dispatched records today or records that are not completed
-  
-  async findAll(payload: {currentUser: User}): Promise<Dispatch[]> {
+
+  async findAll(payload: { currentUser: User }): Promise<Dispatch[]> {
     console.log('currentUser', payload.currentUser)
     const today = new Date();
     today.setUTCHours(8, 0, 0, 0);
@@ -171,21 +174,33 @@ export class DispatchService {
 
     // Check if the currentUser is an admin
     if (payload.currentUser.user_level === UserLevelEnum.Admin) {
-      return await this.prisma.dispatch.findMany(query);
+      const dispatches = await this.prisma.dispatch.findMany(query);
+      console.log('dispatches', dispatches)
+      return dispatches.map(i => {
+        // @ts-ignore
+        i.time_of_call = this.formatDate(i.time_of_call)
+        return i
+      })
     }
 
     // If not admin, add additional filtering for dispatcher_id
     query.where['dispatcher_id'] = payload.currentUser.id;
 
-    return await this.prisma.dispatch.findMany(query);
+    const dispatches = await this.prisma.dispatch.findMany(query);
+
+    return dispatches.map(i => {
+      // @ts-ignore
+      i.time_of_call = this.formatDate(i.time_of_call)
+      return i
+    })
   }
 
   async findOne(id: string) {
 
     console.log('Finding dispatch with ID:', id);
-    
+
     const dispatch = await this.prisma.dispatch.findUnique({
-      where: {id},
+      where: { id },
       include: {
         dispatcher: {
           select: {
@@ -196,7 +211,7 @@ export class DispatchService {
         },
         emergency: true,
         team: { // include team leader
-          include: { 
+          include: {
             team_leader: {
               select: {
                 id: true,
@@ -247,7 +262,7 @@ export class DispatchService {
 
     console.log('updateDispatchDto', updateDispatchDto)
     let updatedDispatch: Dispatch | null = null;
-    
+
     // Check if the dispatch with the given ID exists
     const existingDispatch = await this.findOne(id);
 
@@ -282,13 +297,13 @@ export class DispatchService {
 
   async remove(id: string) {
     const existingDispatch = await this.findOne(id);
-  
+
     await this.prisma.dispatch.delete({
       where: { id },
     });
 
     console.log('remove success')
-  
+
     return true;
   }
 
@@ -324,11 +339,11 @@ export class DispatchService {
     // Check if the dispatch with the given ID exists
     const existingDispatch = await this.findOne(dispatchId);
 
-    if(existingDispatch.dispatcher_id !== updateDispatchDto.dispatcher_id){
+    if (existingDispatch.dispatcher_id !== updateDispatchDto.dispatcher_id) {
       throw new Error(`Dispatcher not allowed to set time`);
     }
 
-      // Update status based on the fieldName
+    // Update status based on the fieldName
     switch (fieldName) {
       case 'time_proceeding_scene':
         updateData['status'] = 2;
@@ -376,6 +391,26 @@ export class DispatchService {
     }
 
     return await this.findOne(updatedDispatch.id);
+  }
+
+  private formatDate(date: Date) {
+    return (
+      [
+        this.padTo2Digits(date.getMonth() + 1),
+        this.padTo2Digits(date.getDate()),
+        date.getFullYear() % 100,
+      ].join('-') +
+      ' ' +
+      [
+        this.padTo2Digits(date.getHours()),
+        this.padTo2Digits(date.getMinutes()),
+        this.padTo2Digits(date.getSeconds()),
+      ].join(':')
+    );
+  }
+
+  private padTo2Digits(num: number) {
+    return num.toString().padStart(2, '0');
   }
 
 }
