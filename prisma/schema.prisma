@@ -259,7 +259,7 @@ model Item {
   quantity      Int
   cost          Decimal
   date_acquired DateTime
-  // serial_number String
+  serial_number String
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
