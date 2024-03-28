@@ -394,9 +394,9 @@ export class UserService {
 			where: {
 				teamLeader: null, // user is not a team leader
 				status: UserStatusEnum.Active,
-				teamMembers: { // user is not a team member
-					none: {}
-				},
+				// teamMembers: { // user is not a team member
+				// 	none: {}
+				// },
 				is_deleted: false
 			},
 			select: {
@@ -408,7 +408,11 @@ export class UserService {
 				Cso: true,
 				Po: true,
 				Na: true,
-				teamMembers: true,
+				teamMembers: {
+					include: {
+						team: true
+					}
+				},
 				teamLeader: true,
 				emergencyContacts: true,
 				skills: {
@@ -423,7 +427,23 @@ export class UserService {
 			],
 		});
 
-		return users
+		// if team is deleted the field is_deleted will be set to true only and team member should be free
+
+		const filteredUsers = []
+
+		for (let user of users) {
+			console.log('user', user)
+			const isTeamMember = user.teamMembers.find(i => !i.team.is_deleted)
+
+			console.log('isTeamMember', user)
+
+			if (!isTeamMember) {
+				filteredUsers.push(user)
+			}
+
+		}
+		return filteredUsers
+		// return users
 	}
 
 	async findDispatchers() {
