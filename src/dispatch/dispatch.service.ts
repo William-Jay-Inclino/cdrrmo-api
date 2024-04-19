@@ -179,6 +179,10 @@ export class DispatchService {
       return dispatches.map(i => {
         // @ts-ignore
         i.time_of_call = this.formatDate(i.time_of_call)
+
+        // @ts-ignore
+        i.created_at = this.formatDate(i.created_at)
+
         return i
       })
     }
@@ -191,6 +195,9 @@ export class DispatchService {
     return dispatches.map(i => {
       // @ts-ignore
       i.time_of_call = this.formatDate(i.time_of_call)
+
+      // @ts-ignore
+      i.created_at = this.formatDate(i.created_at)
       return i
     })
   }
@@ -290,6 +297,8 @@ export class DispatchService {
 
       // @ts-ignore
       updatedDispatch.time_of_call = this.formatDate(updatedDispatch.time_of_call)
+      // @ts-ignore
+      updatedDispatch.created_at = this.formatDate(updatedDispatch.created_at)
 
       return updatedDispatch;
     } catch (error) {

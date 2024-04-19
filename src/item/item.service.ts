@@ -35,18 +35,30 @@ export class ItemService {
 	  
 		if (searchField && searchValue !== undefined) {
 		  if (searchField === SearchFieldEnum.Name) {
-			whereCondition = {
-			  [searchField]: {
-				contains: searchValue,
-				mode: 'insensitive',
-			  },
-			};
+        console.log('searchField is name');
+        whereCondition = {
+          [searchField]: {
+          contains: searchValue,
+          mode: 'insensitive',
+          },
+        };
+		  }
+      else if (searchField === SearchFieldEnum.Category) {
+        console.log('searchField is category');
+        whereCondition = {
+          [searchField]: {
+          equals: searchValue,
+          },
+        };
 		  }
 		}
 
     whereCondition = {
+      ...whereCondition,
 			is_deleted: false
 		}
+
+    console.log('whereCondition', whereCondition);
 
     const items = await this.prisma.item.findMany({
       include: {

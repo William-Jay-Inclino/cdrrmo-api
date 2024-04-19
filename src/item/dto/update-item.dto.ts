@@ -1,6 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateItemDto } from './create-item.dto';
-import { IsUUID, IsString, IsNumber, IsNotEmpty, IsDate } from 'class-validator';
+import { IsUUID, IsString, IsNumber, IsNotEmpty, IsDate, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateItemDto extends PartialType(CreateItemDto) {
@@ -19,7 +19,7 @@ export class UpdateItemDto extends PartialType(CreateItemDto) {
     description: string
 
     @ApiProperty()
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     serial_number: string
 

@@ -8,4 +8,5 @@ export enum MovementTypeEnum {
 
 export enum SearchFieldEnum{
     Name = 'name',
+    Category = 'category_id',
 }

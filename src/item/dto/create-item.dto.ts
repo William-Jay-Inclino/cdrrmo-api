@@ -18,7 +18,7 @@ export class CreateItemDto {
     description: string
 
     @ApiProperty()
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     serial_number: string
 
