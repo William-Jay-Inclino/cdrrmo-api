@@ -69,6 +69,9 @@ export class DispatchService {
           const dispatch = await this.findOne(createdDispatch.id);
           // @ts-ignore
           dispatch.time_of_call = this.formatDate(dispatch.time_of_call)
+
+          // @ts-ignore
+          dispatch.created_at = this.formatDate(dispatch.created_at)
           return dispatch
         }),
       );
@@ -405,6 +408,9 @@ export class DispatchService {
     const dispatch = await this.findOne(updatedDispatch.id);
     // @ts-ignore
     dispatch.time_of_call = this.formatDate(dispatch.time_of_call)
+
+    // @ts-ignore
+    dispatch.created_at = this.formatDate(dispatch.created_at)
 
     return dispatch
   }
