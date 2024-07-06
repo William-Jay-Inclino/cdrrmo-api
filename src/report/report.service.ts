@@ -82,6 +82,8 @@ export class ReportService {
       // @ts-ignore
       item.time_of_call = item.time_of_call ? this.formatDate(new Date(item.time_of_call)) : null
       // @ts-ignore
+      item.time_of_call2 = item.time_of_call ? this.formatTime(new Date(item.time_of_call)) : null
+      // @ts-ignore
       item.time_proceeding_scene = item.time_proceeding_scene ?  this.formatDate(new Date(item.time_proceeding_scene)) : null
       // @ts-ignore
       item.time_arrival_scene = item.time_arrival_scene ? this.formatDate(new Date(item.time_arrival_scene)) : null
@@ -119,6 +121,27 @@ export class ReportService {
 
   private padTo2Digits(num: number) {
     return num.toString().padStart(2, '0');
+  }
+
+  private formatTime(date: Date): string {
+    // Get hours and minutes from the date object
+    let hours: number = date.getHours();
+    let minutes: number = date.getMinutes();
+  
+    // Determine AM or PM
+    const ampm: string = hours >= 12 ? 'PM' : 'AM';
+  
+    // Convert hours from 24-hour format to 12-hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+  
+    // Pad minutes with leading zero if needed
+    const minutesStr: string = minutes < 10 ? '0' + minutes : minutes.toString();
+  
+    // Combine the parts into the final format
+    const formattedTime: string = `${hours}:${minutesStr} ${ampm}`;
+    
+    return formattedTime;
   }
 
 }
